@@ -1,0 +1,109 @@
+package com.nhom5.pharma;
+
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.widget.ImageViewCompat;
+import androidx.fragment.app.Fragment;
+
+import com.nhom5.pharma.feature.lohang.LoHangFragment;
+import com.nhom5.pharma.feature.nhacungcap.NhaCungCapFragment;
+import com.nhom5.pharma.feature.nhaphang.NhapHangFragment;
+import com.nhom5.pharma.feature.quanly.QuanLyFragment;
+import com.nhom5.pharma.feature.sanpham.SanPhamFragment;
+
+public class MainActivity extends AppCompatActivity {
+
+    private static final int TAB_ORDERS = 0;
+    private static final int TAB_PRODUCTS = 1;
+    private static final int TAB_BATCHES = 2;
+    private static final int TAB_SUPPLIERS = 3;
+    private static final int TAB_MANAGE = 4;
+
+    private static final int ACTIVE_COLOR = Color.parseColor("#5cc849");
+    private static final int INACTIVE_COLOR = Color.parseColor("#000000");
+
+    private ImageView[] navIcons;
+    private TextView[] navLabels;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        navIcons = new ImageView[]{
+                findViewById(R.id.iv_nav_orders),
+                findViewById(R.id.iv_nav_products),
+                findViewById(R.id.iv_nav_batches),
+                findViewById(R.id.iv_nav_suppliers),
+                findViewById(R.id.iv_nav_manage)
+        };
+        navLabels = new TextView[]{
+                findViewById(R.id.tv_nav_orders),
+                findViewById(R.id.tv_nav_products),
+                findViewById(R.id.tv_nav_batches),
+                findViewById(R.id.tv_nav_suppliers),
+                findViewById(R.id.tv_nav_manage)
+        };
+
+        LinearLayout tabOrders = findViewById(R.id.nav_tab_orders);
+        LinearLayout tabProducts = findViewById(R.id.nav_tab_products);
+        LinearLayout tabBatches = findViewById(R.id.nav_tab_batches);
+        LinearLayout tabSuppliers = findViewById(R.id.nav_tab_suppliers);
+        LinearLayout tabManage = findViewById(R.id.nav_tab_manage);
+
+        tabOrders.setOnClickListener(v -> selectTab(TAB_ORDERS));
+        tabProducts.setOnClickListener(v -> selectTab(TAB_PRODUCTS));
+        tabBatches.setOnClickListener(v -> selectTab(TAB_BATCHES));
+        tabSuppliers.setOnClickListener(v -> selectTab(TAB_SUPPLIERS));
+        tabManage.setOnClickListener(v -> selectTab(TAB_MANAGE));
+
+        selectTab(TAB_ORDERS);
+    }
+
+    private void selectTab(int index) {
+        Fragment selected;
+        switch (index) {
+            case TAB_ORDERS:
+                selected = new NhapHangFragment();
+                break;
+            case TAB_PRODUCTS:
+                selected = new SanPhamFragment();
+                break;
+            case TAB_BATCHES:
+                selected = new LoHangFragment();
+                break;
+            case TAB_SUPPLIERS:
+                selected = new NhaCungCapFragment();
+                break;
+            case TAB_MANAGE:
+                selected = new QuanLyFragment();
+                break;
+            default:
+                selected = new NhapHangFragment();
+                index = TAB_ORDERS;
+                break;
+        }
+
+        loadFragment(selected);
+
+        for (int i = 0; i < navIcons.length; i++) {
+            boolean isSelected = (i == index);
+            int color = isSelected ? ACTIVE_COLOR : INACTIVE_COLOR;
+            ImageViewCompat.setImageTintList(navIcons[i], ColorStateList.valueOf(color));
+            navLabels[i].setTextColor(color);
+        }
+    }
+
+    private void loadFragment(Fragment fragment) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.frame_container, fragment)
+                .commit();
+    }
+}

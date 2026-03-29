@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "617622884983",
+    "project_id": "pharmaimport-474c3",
+    "storage_bucket": "pharmaimport-474c3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:617622884983:android:60299e7e0177ff7766ac72",
+        "android_client_info": {
+          "package_name": "com.nhom5.pharma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjbTDVGLvpDs-gvGUinv3uwhJSz5_-UM8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

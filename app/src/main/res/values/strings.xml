@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">PharmaImportManager</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="nav_orders">Đơn hàng</string>
+    <string name="nav_products">Sản phẩm</string>
+    <string name="nav_batches">Lô hàng</string>
+    <string name="nav_suppliers">Nhà cung cấp</string>
+    <string name="nav_manage">Quản lý</string>
+</resources>
