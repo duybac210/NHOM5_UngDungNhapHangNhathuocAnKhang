@@ -1,5 +1,6 @@
 package com.nhom5.pharma.feature.nhaphang;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,27 +22,29 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
 
     @Override
     protected void onBindViewHolder(@NonNull NhapHangViewHolder holder, int position, @NonNull NhapHang model) {
-        // 1. Hiển thị Mã đơn (Lấy ID của Document trong Firestore)
         String id = getSnapshots().getSnapshot(position).getId();
-        holder.tvMaDon.setText(id.substring(0, Math.min(id.length(), 6))); // Lấy 6 ký tự đầu cho gọn
+        holder.tvMaDon.setText(id);
 
-        // 2. Định dạng ngày tháng
-        if (model.getCreatedAt() != null) {
+        if (model.getNgayTao() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-            holder.tvNgayNhap.setText(sdf.format(model.getCreatedAt()));
+            holder.tvNgayNhap.setText(sdf.format(model.getNgayTao()));
         }
 
-        // 3. Định dạng tiền tệ
         holder.tvTongTien.setText(String.format("%,.0f đ", model.getTongTien()));
 
-        // 4. Hiển thị trạng thái màu sắc cho "xịn"
-        if (model.getTrangThai() == 1) {
+        if (model.getTrangThai()) {
             holder.tvTrangThai.setText("Đã nhập hàng");
-            holder.tvTrangThai.setTextColor(Color.parseColor("#4CAF50")); // Xanh lá
+            holder.tvTrangThai.setTextColor(Color.parseColor("#4CAF50"));
         } else {
-            holder.tvTrangThai.setText("Chờ xử lý");
-            holder.tvTrangThai.setTextColor(Color.parseColor("#F44336")); // Đỏ
+            holder.tvTrangThai.setText("Đã hủy");
+            holder.tvTrangThai.setTextColor(Color.parseColor("#F44336"));
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ChiTietNhapHangActivity.class);
+            intent.putExtra("NHAP_HANG_ID", id);
+            v.getContext().startActivity(intent);
+        });
     }
 
     @NonNull

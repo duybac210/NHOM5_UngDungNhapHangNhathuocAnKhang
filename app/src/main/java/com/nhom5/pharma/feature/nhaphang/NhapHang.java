@@ -1,38 +1,52 @@
 package com.nhom5.pharma.feature.nhaphang;
 
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.IgnoreExtraProperties;
+import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.ServerTimestamp;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 @IgnoreExtraProperties
 public class NhapHang {
     private String id;
-    private String nhaCungCapId;
-    private String tenNhaCungCap;
-    private int trangThai;
-    private int tongSoLuong;
-    private double tongTien;
-    private String ghiChu;
-
-    @ServerTimestamp // Tự động chuyển đổi Timestamp từ Firebase sang Date của Java
-    private Date createdAt;
-
+    private DocumentReference NccID;
+    private boolean TrangThai;
+    private double TongTien;
+    
+    @ServerTimestamp
+    private Date NgayTao;
+    
     private String createdBy;
-    private List<Map<String, Object>> chiTiet;
 
     public NhapHang() {}
 
-    // Getter và Setter đầy đủ (Quan trọng để Firebase đọc được dữ liệu)
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
-    public String getTenNhaCungCap() { return tenNhaCungCap; }
-    public void setTenNhaCungCap(String tenNhaCungCap) { this.tenNhaCungCap = tenNhaCungCap; }
-    public double getTongTien() { return tongTien; }
-    public void setTongTien(double tongTien) { this.tongTien = tongTien; }
-    public int getTrangThai() { return trangThai; }
-    public void setTrangThai(int trangThai) { this.trangThai = trangThai; }
-    public Date getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    @PropertyName("NccID")
+    public DocumentReference getNccID() { return NccID; }
+    
+    @PropertyName("NccID")
+    public void setNccID(DocumentReference NccID) { this.NccID = NccID; }
+
+    @PropertyName("TrangThai")
+    public boolean getTrangThai() { return TrangThai; }
+    
+    @PropertyName("TrangThai")
+    public void setTrangThai(boolean TrangThai) { this.TrangThai = TrangThai; }
+
+    @PropertyName("TongTien")
+    public double getTongTien() { return TongTien; }
+    
+    @PropertyName("TongTien")
+    public void setTongTien(double TongTien) { this.TongTien = TongTien; }
+
+    @PropertyName("NgayTao")
+    public Date getNgayTao() { return NgayTao; }
+    
+    @PropertyName("NgayTao")
+    public void setNgayTao(Date NgayTao) { this.NgayTao = NgayTao; }
+
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
 }
