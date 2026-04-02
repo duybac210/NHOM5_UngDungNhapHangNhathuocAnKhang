@@ -17,7 +17,7 @@
     <!-- Thanh điều hướng tùy chỉnh -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="67dp"
+        android:layout_height="72dp"
         android:background="#dff7fb"
         android:gravity="center_vertical"
         android:orientation="horizontal"
@@ -37,8 +37,8 @@
 
             <ImageView
                 android:id="@+id/iv_nav_orders"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:src="@drawable/ic_orders"
                 app:tint="#5cc849" />
 
@@ -50,7 +50,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:text="Đơn hàng"
                 android:textColor="#5cc849"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:maxLines="1" />
         </LinearLayout>
@@ -68,8 +68,8 @@
 
             <ImageView
                 android:id="@+id/iv_nav_products"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:src="@drawable/ic_products"
                 app:tint="#000000" />
 
@@ -81,7 +81,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:text="Sản phẩm"
                 android:textColor="#000000"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:maxLines="1" />
         </LinearLayout>
@@ -99,8 +99,8 @@
 
             <ImageView
                 android:id="@+id/iv_nav_batches"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:src="@drawable/ic_batches"
                 app:tint="#000000" />
 
@@ -112,7 +112,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:text="Lô hàng"
                 android:textColor="#000000"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:maxLines="1" />
         </LinearLayout>
@@ -130,8 +130,8 @@
 
             <ImageView
                 android:id="@+id/iv_nav_suppliers"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:src="@drawable/ic_suppliers"
                 app:tint="#000000" />
 
@@ -143,7 +143,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:text="Nhà cung cấp"
                 android:textColor="#000000"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:maxLines="1" />
         </LinearLayout>
@@ -161,8 +161,8 @@
 
             <ImageView
                 android:id="@+id/iv_nav_manage"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:src="@drawable/ic_manage"
                 app:tint="#000000" />
 
@@ -174,7 +174,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:text="Quản lý"
                 android:textColor="#000000"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:maxLines="1" />
         </LinearLayout>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="30dp"
+    android:layout_height="35dp"
     android:background="?attr/selectableItemBackground"
     android:gravity="center_vertical"
     android:orientation="horizontal"
@@ -12,19 +12,23 @@
         android:id="@+id/tvMaDon"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1.1"
+        android:layout_weight="0.8"
         android:fontFamily="sans-serif"
-        android:textColor="@color/text_black"
-        android:textSize="14sp" />
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:maxLines="1" />
 
     <TextView
         android:id="@+id/tvNgayNhap"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1.2"
+        android:layout_weight="1.1"
         android:fontFamily="sans-serif"
-        android:textColor="@color/text_black"
-        android:textSize="14sp" />
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:maxLines="1" />
 
     <TextView
         android:id="@+id/tvTongTien"
@@ -32,16 +36,21 @@
         android:layout_height="wrap_content"
         android:layout_weight="1.2"
         android:fontFamily="sans-serif"
-        android:textColor="@color/text_black"
-        android:textSize="14sp" />
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:maxLines="1" />
 
     <TextView
         android:id="@+id/tvTrangThai"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1.1"
+        android:layout_weight="1.4"
         android:fontFamily="sans-serif"
-        android:textColor="@color/text_black"
+        android:textColor="#000000"
         android:textSize="14sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:paddingStart="12dp"
+        android:gravity="start|center_vertical"
+        android:maxLines="1" />
 </LinearLayout>

@@ -13,9 +13,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.nhom5.pharma.R;
 
 import java.text.SimpleDateFormat;
@@ -48,7 +46,6 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
             getSupportActionBar().setTitle("Chi tiết đơn nhập hàng");
         }
         
-        // Tắt màn hình "chồng" này đi để quay về màn hình bên dưới
         toolbar.setNavigationOnClickListener(v -> finish());
 
         tvOrderCodeTitle = findViewById(R.id.tvOrderCodeTitle);
@@ -95,12 +92,13 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
         if (nhapHangId == null) return;
         repository.getNhapHangById(nhapHangId).addOnSuccessListener(doc -> {
             if (doc.exists()) {
-                DocumentReference nccRef = doc.get("NccID", DocumentReference.class);
                 NhapHang nhapHang = doc.toObject(NhapHang.class);
                 if (nhapHang != null) {
                     nhapHang.setId(doc.getId());
                     displayNhapHangInfo(nhapHang);
-                    fetchSupplierName(nccRef);
+                    if (nhapHang.getMaNCC() != null) {
+                        fetchSupplierName(nhapHang.getMaNCC());
+                    }
                     fetchLoHangList(doc.getId());
                 }
             }
@@ -109,27 +107,28 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
 
     private void displayNhapHangInfo(NhapHang nhapHang) {
         tvOrderCodeTitle.setText(nhapHang.getId());
-        if (nhapHang.getTrangThai()) {
+        if (nhapHang.isTrangThai()) {
             tvTrangThaiHeader.setText("Đã nhập hàng");
             tvTrangThaiHeader.setTextColor(Color.parseColor("#4CAF50"));
         } else {
             tvTrangThaiHeader.setText("Đã hủy");
             tvTrangThaiHeader.setTextColor(Color.parseColor("#F44336"));
         }
-        tvNguoiNhap.setText(nhapHang.getCreatedBy() != null ? nhapHang.getCreatedBy() : "Admin");
+        
+        tvNguoiNhap.setText("Admin"); 
+        
         if (nhapHang.getNgayTao() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
             tvNgayNhapMeta.setText(sdf.format(nhapHang.getNgayTao()));
         }
     }
 
-    private void fetchSupplierName(DocumentReference nccRef) {
-        if (nccRef == null) return;
-        repository.getSupplierByRef(nccRef).addOnSuccessListener(doc -> {
-            if (doc.exists()) tvTenNhaCungCap.setText(doc.getString("TenNCC"));
-            else {
-                FirebaseFirestore.getInstance().collection("Nhacungcap").document(nccRef.getId().trim()).get()
-                    .addOnSuccessListener(d2 -> { if (d2.exists()) tvTenNhaCungCap.setText(d2.getString("TenNCC")); });
+    private void fetchSupplierName(String maNCC) {
+        repository.getSupplierById(maNCC).addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                String name = doc.getString("tenNCC");
+                if (name == null) name = doc.getString("TenNCC");
+                tvTenNhaCungCap.setText(name);
             }
         });
     }
@@ -140,16 +139,29 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
             for (DocumentSnapshot doc : snapshot) {
                 View itemView = LayoutInflater.from(this).inflate(R.layout.item_chi_tiet_lo_hang, llChiTiet, false);
                 ((TextView)itemView.findViewById(R.id.tvSoLo)).setText(doc.getId());
-                double sl = doc.getDouble("SoLuong") != null ? doc.getDouble("SoLuong") : 0;
-                double dg = doc.getDouble("DonGiaNhap") != null ? doc.getDouble("DonGiaNhap") : 0;
-                ((TextView)itemView.findViewById(R.id.tvSoLuong)).setText(String.format(Locale.getDefault(), "%,.0f", sl));
-                ((TextView)itemView.findViewById(R.id.tvDonGia)).setText(String.format(Locale.getDefault(), "%,.0f đ", dg));
-                ((TextView)itemView.findViewById(R.id.tvThanhTien)).setText(String.format(Locale.getDefault(), "%,.0f đ", sl * dg));
                 
-                DocumentReference spRef = doc.get("SanPhamID", DocumentReference.class);
-                if (spRef != null) repository.getProductByRef(spRef).addOnSuccessListener(spDoc -> {
-                    if (spDoc.exists()) ((TextView)itemView.findViewById(R.id.tvTenHang)).setText(spDoc.getString("TenSP"));
-                });
+                Double sl = doc.getDouble("soLuong");
+                Double dg = doc.getDouble("donGiaNhap");
+                
+                double soLuong = sl != null ? sl : 0;
+                double donGia = dg != null ? dg : 0;
+                
+                ((TextView)itemView.findViewById(R.id.tvSoLuong)).setText(String.format(Locale.getDefault(), "%,.0f", soLuong));
+                
+                // Bỏ khoảng trống: "%,.0f đ" -> "%,.0fđ"
+                ((TextView)itemView.findViewById(R.id.tvDonGia)).setText(String.format(Locale.getDefault(), "%,.0fđ", donGia));
+                ((TextView)itemView.findViewById(R.id.tvThanhTien)).setText(String.format(Locale.getDefault(), "%,.0fđ", soLuong * donGia));
+                
+                String maSP = doc.getString("maSP");
+                if (maSP != null) {
+                    repository.getProductById(maSP).addOnSuccessListener(spDoc -> {
+                        if (spDoc.exists()) {
+                            String tenSP = spDoc.getString("tenSP");
+                            if (tenSP == null) tenSP = spDoc.getString("TenSP");
+                            ((TextView)itemView.findViewById(R.id.tvTenHang)).setText(tenSP);
+                        }
+                    });
+                }
                 llChiTiet.addView(itemView);
             }
         });

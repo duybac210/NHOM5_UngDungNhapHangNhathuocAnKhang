@@ -1,52 +1,45 @@
 package com.nhom5.pharma.feature.nhaphang;
 
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.IgnoreExtraProperties;
-import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.ServerTimestamp;
 import java.util.Date;
 
 @IgnoreExtraProperties
 public class NhapHang {
     private String id;
-    private DocumentReference NccID;
-    private boolean TrangThai;
-    private double TongTien;
+    private String maNCC;
+    private boolean trangThai;
+    private double tongTien;
+    private String ghiChu;
     
     @ServerTimestamp
-    private Date NgayTao;
-    
-    private String createdBy;
+    private Date ngayTao;
+    private Date ngayNhap;
+    private Date ngayCapNhat;
 
     public NhapHang() {}
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    @PropertyName("NccID")
-    public DocumentReference getNccID() { return NccID; }
-    
-    @PropertyName("NccID")
-    public void setNccID(DocumentReference NccID) { this.NccID = NccID; }
+    public String getMaNCC() { return maNCC; }
+    public void setMaNCC(String maNCC) { this.maNCC = maNCC; }
 
-    @PropertyName("TrangThai")
-    public boolean getTrangThai() { return TrangThai; }
-    
-    @PropertyName("TrangThai")
-    public void setTrangThai(boolean TrangThai) { this.TrangThai = TrangThai; }
+    public boolean isTrangThai() { return trangThai; }
+    public void setTrangThai(boolean trangThai) { this.trangThai = trangThai; }
 
-    @PropertyName("TongTien")
-    public double getTongTien() { return TongTien; }
-    
-    @PropertyName("TongTien")
-    public void setTongTien(double TongTien) { this.TongTien = TongTien; }
+    public double getTongTien() { return tongTien; }
+    public void setTongTien(double tongTien) { this.tongTien = tongTien; }
 
-    @PropertyName("NgayTao")
-    public Date getNgayTao() { return NgayTao; }
-    
-    @PropertyName("NgayTao")
-    public void setNgayTao(Date NgayTao) { this.NgayTao = NgayTao; }
+    public String getGhiChu() { return ghiChu; }
+    public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
 
-    public String getCreatedBy() { return createdBy; }
-    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+    public Date getNgayTao() { return ngayTao; }
+    public void setNgayTao(Date ngayTao) { this.ngayTao = ngayTao; }
+
+    public Date getNgayNhap() { return ngayNhap; }
+    public void setNgayNhap(Date ngayNhap) { this.ngayNhap = ngayNhap; }
+
+    public Date getNgayCapNhat() { return ngayCapNhat; }
+    public void setNgayCapNhat(Date ngayCapNhat) { this.ngayCapNhat = ngayCapNhat; }
 }

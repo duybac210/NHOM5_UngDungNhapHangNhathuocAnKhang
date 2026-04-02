@@ -30,9 +30,10 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
             holder.tvNgayNhap.setText(sdf.format(model.getNgayTao()));
         }
 
-        holder.tvTongTien.setText(String.format("%,.0f đ", model.getTongTien()));
+        // Bỏ khoảng trống: "%,.0f đ" -> "%,.0fđ"
+        holder.tvTongTien.setText(String.format(Locale.getDefault(), "%,.0fđ", model.getTongTien()));
 
-        if (model.getTrangThai()) {
+        if (model.isTrangThai()) {
             holder.tvTrangThai.setText("Đã nhập hàng");
             holder.tvTrangThai.setTextColor(Color.parseColor("#4CAF50"));
         } else {
