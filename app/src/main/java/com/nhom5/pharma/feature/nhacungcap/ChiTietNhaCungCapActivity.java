@@ -4,10 +4,10 @@ import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,30 +18,25 @@ import java.text.DecimalFormat;
 public class ChiTietNhaCungCapActivity extends AppCompatActivity {
 
     private NhaCungCap ncc;
-    private boolean isEditMode = false;
     private NhaCungCapRepository repository;
 
     // View cho màn hình Chi tiết
-    private TextView tvTen, tvMa, tvMST, tvSDT, tvEmail, tvDiaChi, tvTongDon, tvGiaTri;
+    private TextView tvTen, tvMa, tvMST, tvSDT, tvEmail, tvDiaChi, tvGiaTri, tvTongDon;
     
-    // View cho màn hình Chỉnh sửa (trong layout edit)
+    // View cho màn hình Chỉnh sửa
     private EditText edtSDT, edtEmail, edtDiaChi, edtMaNCC, edtMST;
-    private TextView tvEditTen;
+    private TextView tvEditTen, tvEditTongDon, tvEditGiaTri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         repository = NhaCungCapRepository.getInstance();
-        
-        // Nhận dữ liệu từ Intent
         ncc = (NhaCungCap) getIntent().getSerializableExtra("NHA_CUNG_CAP");
-        
         showDetailLayout();
     }
 
     private void showDetailLayout() {
         setContentView(R.layout.activity_chi_tiet_nha_cung_cap);
-        isEditMode = false;
         initDetailViews();
         bindDataToDetail();
 
@@ -52,7 +47,6 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
 
     private void showEditLayout() {
         setContentView(R.layout.activity_edit_nha_cung_cap);
-        isEditMode = true;
         initEditViews();
         bindDataToEdit();
 
@@ -68,8 +62,8 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         tvSDT = findViewById(R.id.tvDetailSDT);
         tvEmail = findViewById(R.id.tvDetailEmail);
         tvDiaChi = findViewById(R.id.tvDetailDiaChi);
-        tvTongDon = findViewById(R.id.tvDetailTongDon);
         tvGiaTri = findViewById(R.id.tvDetailGiaTri);
+        tvTongDon = findViewById(R.id.tvDetailTongDon);
     }
 
     private void bindDataToDetail() {
@@ -80,9 +74,9 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         tvSDT.setText(ncc.getSoDienThoai());
         tvEmail.setText(ncc.getEmail());
         tvDiaChi.setText(ncc.getDiaChi());
-        
         DecimalFormat formatter = new DecimalFormat("###,###,###");
         tvGiaTri.setText(formatter.format(ncc.getTongMua()));
+        tvTongDon.setText("12"); // Giả lập dữ liệu thống kê
     }
 
     private void initEditViews() {
@@ -92,19 +86,22 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         edtSDT = findViewById(R.id.edtEditSDT);
         edtEmail = findViewById(R.id.edtEditEmail);
         edtDiaChi = findViewById(R.id.edtEditDiaChi);
-
-        // Khóa mã NCC và MST đúng như yêu cầu
-        edtMaNCC.setEnabled(false);
-        edtMST.setEnabled(false);
+        tvEditTongDon = findViewById(R.id.tvEditTongDon);
+        tvEditGiaTri = findViewById(R.id.tvEditGiaTri);
     }
 
     private void bindDataToEdit() {
+        if (ncc == null) return;
         tvEditTen.setText(ncc.getTenNCC());
         edtMaNCC.setText(ncc.getMaNCC());
         edtMST.setText(ncc.getMaSoThue());
         edtSDT.setText(ncc.getSoDienThoai());
         edtEmail.setText(ncc.getEmail());
         edtDiaChi.setText(ncc.getDiaChi());
+        
+        DecimalFormat formatter = new DecimalFormat("###,###,###");
+        tvEditGiaTri.setText(formatter.format(ncc.getTongMua()));
+        tvEditTongDon.setText("12");
     }
 
     private void saveChanges() {
@@ -122,18 +119,22 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         final Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_confirm_delete_ncc);
-        
+        dialog.setCancelable(true);
+
         Window window = dialog.getWindow();
         if (window != null) {
-            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+            window.setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT);
+            window.setGravity(Gravity.CENTER); 
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
 
         TextView tvMsg = dialog.findViewById(R.id.tvDeleteMessage);
-        tvMsg.setText("Hệ thống sẽ xóa hoàn toàn nhà cung cấp " + ncc.getTenNCC() + " nhưng vẫn giữ những giao dịch lịch sử nếu có. Bạn có chắc là muốn xóa?");
+        if (ncc != null) {
+            tvMsg.setText("Hệ thống sẽ xóa hoàn toàn nhà cung cấp " + ncc.getTenNCC() + " nhưng vẫn giữ những giao dịch lịch sử nếu có. Bạn có chắc là muốn xóa?");
+        }
 
-        dialog.findViewById(R.id.btnSkip).setOnClickListener(v -> dialog.dismiss());
         dialog.findViewById(R.id.btnCloseDialog).setOnClickListener(v -> dialog.dismiss());
+        dialog.findViewById(R.id.btnSkip).setOnClickListener(v -> dialog.dismiss());
         
         dialog.findViewById(R.id.btnConfirmDelete).setOnClickListener(v -> {
             repository.deleteNhaCungCap(ncc.getId()).addOnSuccessListener(aVoid -> {

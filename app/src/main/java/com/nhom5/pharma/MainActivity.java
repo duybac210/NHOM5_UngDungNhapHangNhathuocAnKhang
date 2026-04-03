@@ -39,8 +39,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // TẠM THỜI BỎ QUA KIỂM TRA ĐĂNG NHẬP ĐỂ TEST NHÀ CUNG CẤP
-        /*
+
         mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() == null) {
             Intent intent = new Intent(this, DangNhapActivity.class);
@@ -48,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
-        */
+
 
         setContentView(R.layout.activity_main);
 

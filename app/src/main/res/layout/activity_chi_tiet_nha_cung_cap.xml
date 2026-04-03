@@ -3,219 +3,137 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F7FF">
+    android:background="#F8FAFC">
 
-    <!-- Toolbar -->
-    <LinearLayout
-        android:id="@+id/toolbar"
+    <RelativeLayout
+        android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
+        android:background="#FFFFFF"
         app:layout_constraintTop_toTopOf="parent">
-
         <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_centerVertical="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_back"
             app:tint="#333333" />
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
+            android:layout_centerInParent="true"
             android:text="Chi tiết nhà cung cấp"
             android:textColor="#000000"
             android:textSize="18sp"
             android:textStyle="bold" />
-    </LinearLayout>
+    </RelativeLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
-        app:layout_constraintBottom_toTopOf="@id/layoutActions">
+        app:layout_constraintTop_toBottomOf="@id/header"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:paddingBottom="40dp"
+            android:clipToPadding="false">
 
-            <!-- Card Logo & Mã -->
+            <!-- Card 1 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="20dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:id="@+id/imgLogo"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:src="@drawable/ic_supplier_logo" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginStart="20dp">
-
-                        <TextView
-                            android:id="@+id/tvDetailTenNCC"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Công ty Zulic Pharma"
-                            android:textColor="#000000"
-                            android:textSize="17sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvDetailMaNCC"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="Mã NCC: NCC0001"
-                            android:textColor="#666666"
-                            android:textSize="14sp" />
-
-                        <TextView
-                            android:id="@+id/tvDetailMST"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="Mã số thuế: 0312345678"
-                            android:textColor="#666666"
-                            android:textSize="14sp" />
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="24dp" android:gravity="center_vertical">
+                    <ImageView android:id="@+id/imgLogo" android:layout_width="70dp" android:layout_height="70dp" android:src="@drawable/ic_supplier_logo" />
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="20dp" android:orientation="vertical">
+                        <TextView android:id="@+id/tvDetailTenNCC" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Công ty Zulic Pharma" android:textColor="#000000" android:textSize="18sp" android:textStyle="bold" />
+                        <TextView android:id="@+id/tvDetailMaNCC" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Mã NCC: NCC0001" android:textColor="#666666" />
+                        <TextView android:id="@+id/tvDetailMST" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Mã số thuế: 0312345678" android:textColor="#666666" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Card Thông tin cơ bản -->
+            <!-- Card 2 -->
             <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Thông tin cơ bản"
-                        android:textColor="#000000"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
+                android:layout_width="match_parent" android:layout_height="wrap_content" app:cardCornerRadius="24dp" app:cardElevation="1dp" app:cardUseCompatPadding="true">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Thông tin cơ bản" android:textStyle="bold" android:textColor="#000000" android:textSize="16sp"/>
                     <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Điện thoại:" android:textColor="#666666" />
                         <TextView android:id="@+id/tvDetailSDT" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:text="0789892167" android:textColor="#000000" />
                     </RelativeLayout>
-
                     <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Email:" android:textColor="#666666" />
                         <TextView android:id="@+id/tvDetailEmail" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:text="nt1@gmail.com" android:textColor="#000000" />
                     </RelativeLayout>
-
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Địa chỉ: " android:textColor="#666666" />
-                        <TextView android:id="@+id/tvDetailDiaChi" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="86 Lê Thánh Tôn, Quận 1, Thành phố Hồ Chí Minh" android:textColor="#000000" android:gravity="end" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Địa chỉ:" android:textColor="#666666" />
+                        <TextView android:id="@+id/tvDetailDiaChi" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="end" android:text="86 Lê Thánh Tôn, Quận 1, TP. HCM" android:textColor="#000000" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Card Thống kê -->
+            <!-- Card 3 -->
             <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content" app:cardCornerRadius="24dp" app:cardElevation="1dp" app:cardUseCompatPadding="true">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Thống kê" android:textStyle="bold" android:textColor="#000000" android:textSize="16sp"/>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp">
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tổng số đơn" android:textColor="#666666" />
+                            <TextView android:id="@+id/tvDetailTongDon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="12" android:textStyle="bold" android:textColor="#000000" android:layout_marginTop="8dp" android:textSize="16sp"/>
+                        </LinearLayout>
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Giá trị nhập" android:textColor="#666666" />
+                            <TextView android:id="@+id/tvDetailGiaTri" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1.220.000" android:textStyle="bold" android:textColor="#000000" android:layout_marginTop="8dp" android:textSize="16sp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Nút bấm ở giữa màn hình -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Thống kê"
-                        android:textColor="#000000"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="horizontal">
-                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tổng số đơn" android:textColor="#666666" />
-                            <TextView android:id="@+id/tvDetailTongDon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="12" android:textSize="16sp" android:textStyle="bold" android:textColor="#000000" android:layout_marginTop="8dp"/>
-                        </LinearLayout>
-                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Giá trị nhập" android:textColor="#666666" />
-                            <TextView android:id="@+id/tvDetailGiaTri" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1.220.000" android:textSize="16sp" android:textStyle="bold" android:textColor="#000000" android:layout_marginTop="8dp"/>
-                        </LinearLayout>
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="32dp">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDelete"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:text="Xóa"
+                    android:textAllCaps="false"
+                    android:textColor="#333333"
+                    app:backgroundTint="#FFFFFF"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_delete"
+                    app:iconTint="#333333"
+                    android:layout_marginEnd="20dp"
+                    app:strokeColor="#DDDDDD" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEdit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:text="Chỉnh sửa"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    app:backgroundTint="#5cc849"
+                    app:cornerRadius="24dp"
+                    app:icon="@drawable/ic_edit"
+                    app:iconTint="#FFFFFF" />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
-
-    <!-- Nút hành động phía dưới - Chỉnh để không bị tụt quá sâu -->
-    <LinearLayout
-        android:id="@+id/layoutActions"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDelete"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:text="Xóa"
-            android:textAllCaps="false"
-            android:textColor="#333333"
-            android:backgroundTint="#FFFFFF"
-            app:icon="@drawable/ic_delete"
-            app:iconTint="#333333"
-            android:layout_marginEnd="20dp"
-            app:cornerRadius="25dp"
-            app:elevation="2dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnEdit"
-            android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:text="Chỉnh sửa"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#5cc849"
-            app:icon="@drawable/ic_edit"
-            app:iconTint="#FFFFFF"
-            app:cornerRadius="25dp"
-            app:elevation="2dp" />
-    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
