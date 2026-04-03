@@ -8,6 +8,7 @@ import java.util.Date;
 public class NhapHang {
     private String id;
     private String maNCC;
+    private String maNguoiNhap; // Thêm trường này
     private boolean trangThai;
     private double tongTien;
     private String ghiChu;
@@ -24,6 +25,9 @@ public class NhapHang {
 
     public String getMaNCC() { return maNCC; }
     public void setMaNCC(String maNCC) { this.maNCC = maNCC; }
+
+    public String getMaNguoiNhap() { return maNguoiNhap; }
+    public void setMaNguoiNhap(String maNguoiNhap) { this.maNguoiNhap = maNguoiNhap; }
 
     public boolean isTrangThai() { return trangThai; }
     public void setTrangThai(boolean trangThai) { this.trangThai = trangThai; }

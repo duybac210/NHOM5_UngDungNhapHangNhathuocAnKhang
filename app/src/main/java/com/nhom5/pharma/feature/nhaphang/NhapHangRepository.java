@@ -2,6 +2,7 @@ package com.nhom5.pharma.feature.nhaphang;
 
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -27,16 +28,14 @@ public class NhapHangRepository {
                 .orderBy("ngayTao", Query.Direction.DESCENDING);
     }
 
-    // Thêm lại phương thức tìm kiếm để tránh lỗi biên dịch
-    public Query searchByTenNhaCungCap(String searchText) {
+    // Tìm kiếm theo Mã đơn (Document ID) thời gian thực
+    public Query searchByMaDon(String searchText) {
         if (searchText == null || searchText.trim().isEmpty()) {
             return getAllNhapHang();
         }
         
-        // Lưu ý: Vì trong NhapHang không có field tenNhaCungCap, 
-        // tạm thời tìm theo maNCC để code không bị lỗi.
         return db.collection("NhapHang")
-                .orderBy("maNCC")
+                .orderBy(FieldPath.documentId())
                 .startAt(searchText)
                 .endAt(searchText + "\uf8ff");
     }
@@ -47,6 +46,11 @@ public class NhapHangRepository {
 
     public Task<DocumentSnapshot> getSupplierById(String maNCC) {
         return db.collection("NhaCungCap").document(maNCC).get();
+    }
+
+    // Lấy thông tin tài khoản người nhập từ mã người nhập (String ID)
+    public Task<DocumentSnapshot> getUserById(String maNguoiNhap) {
+        return db.collection("TaiKhoan").document(maNguoiNhap).get();
     }
 
     public Task<QuerySnapshot> getLoHangByNhapHangId(String nhapHangId) {

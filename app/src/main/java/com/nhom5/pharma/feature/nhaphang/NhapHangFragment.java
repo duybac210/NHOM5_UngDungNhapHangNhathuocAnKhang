@@ -1,6 +1,5 @@
 package com.nhom5.pharma.feature.nhaphang;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -47,15 +46,13 @@ public class NhapHangFragment extends Fragment {
 
         adapter = new NhapHangAdapter(options);
         
-        // SỬA LỖI VĂNG APP: Đây là cách đơn giản nhất để chặn lỗi "Inconsistency detected" 
-        // mà không cần tạo thêm file mới. 
         recyclerViewNhapHang.setLayoutManager(new LinearLayoutManager(getContext()) {
             @Override
             public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
                 try {
                     super.onLayoutChildren(recycler, state);
                 } catch (IndexOutOfBoundsException e) {
-                    Log.e("RecyclerView", "Chặn lỗi văng app tại đây");
+                    Log.e("RecyclerView", "Chặn lỗi văng app");
                 }
             }
         });
@@ -68,7 +65,9 @@ public class NhapHangFragment extends Fragment {
             searchEditText.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    Query query = repository.searchByTenNhaCungCap(s.toString());
+                    // Gọi hàm tìm kiếm theo Mã đơn (Document ID)
+                    Query query = repository.searchByMaDon(s.toString().toUpperCase());
+
                     FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
                             .setQuery(query, NhapHang.class)
                             .build();

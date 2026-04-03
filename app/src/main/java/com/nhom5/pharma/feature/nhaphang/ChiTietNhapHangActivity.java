@@ -96,9 +96,18 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                 if (nhapHang != null) {
                     nhapHang.setId(doc.getId());
                     displayNhapHangInfo(nhapHang);
+                    
                     if (nhapHang.getMaNCC() != null) {
                         fetchSupplierName(nhapHang.getMaNCC());
                     }
+                    
+                    // Truy vấn tên người dùng thay vì để cứng Admin
+                    if (nhapHang.getMaNguoiNhap() != null) {
+                        fetchUserName(nhapHang.getMaNguoiNhap());
+                    } else {
+                        tvNguoiNhap.setText("Không xác định");
+                    }
+                    
                     fetchLoHangList(doc.getId());
                 }
             }
@@ -115,8 +124,6 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
             tvTrangThaiHeader.setTextColor(Color.parseColor("#F44336"));
         }
         
-        tvNguoiNhap.setText("Admin"); 
-        
         if (nhapHang.getNgayTao() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
             tvNgayNhapMeta.setText(sdf.format(nhapHang.getNgayTao()));
@@ -129,6 +136,20 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                 String name = doc.getString("tenNCC");
                 if (name == null) name = doc.getString("TenNCC");
                 tvTenNhaCungCap.setText(name);
+            }
+        });
+    }
+
+    private void fetchUserName(String maNguoiNhap) {
+        repository.getUserById(maNguoiNhap).addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                // Thử cả 2 trường hợp tên trường (tenNguoiDung hoặc hoTen)
+                String name = doc.getString("tenNguoiDung");
+                if (name == null) name = doc.getString("hoTen");
+                if (name == null) name = "Người dùng (" + maNguoiNhap + ")";
+                tvNguoiNhap.setText(name);
+            } else {
+                tvNguoiNhap.setText("Mã: " + maNguoiNhap);
             }
         });
     }
@@ -147,8 +168,6 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                 double donGia = dg != null ? dg : 0;
                 
                 ((TextView)itemView.findViewById(R.id.tvSoLuong)).setText(String.format(Locale.getDefault(), "%,.0f", soLuong));
-                
-                // Bỏ khoảng trống: "%,.0f đ" -> "%,.0fđ"
                 ((TextView)itemView.findViewById(R.id.tvDonGia)).setText(String.format(Locale.getDefault(), "%,.0fđ", donGia));
                 ((TextView)itemView.findViewById(R.id.tvThanhTien)).setText(String.format(Locale.getDefault(), "%,.0fđ", soLuong * donGia));
                 
