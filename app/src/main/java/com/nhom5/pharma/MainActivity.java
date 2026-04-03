@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -13,6 +14,7 @@ import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.nhom5.pharma.feature.dangnhap.DangNhapActivity;
 import com.nhom5.pharma.feature.lohang.LoHangFragment;
 import com.nhom5.pharma.feature.nhacungcap.NhaCungCapFragment;
@@ -40,10 +42,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         
         mAuth = FirebaseAuth.getInstance();
-        // Kiểm tra đăng nhập
+
         if (mAuth.getCurrentUser() == null) {
-            Intent intent = new Intent(this, DangNhapActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(this, DangNhapActivity.class));
             finish();
             return;
         }
@@ -65,17 +66,11 @@ public class MainActivity extends AppCompatActivity {
                 findViewById(R.id.tv_nav_manage)
         };
 
-        LinearLayout tabOrders = findViewById(R.id.nav_tab_orders);
-        LinearLayout tabProducts = findViewById(R.id.nav_tab_products);
-        LinearLayout tabBatches = findViewById(R.id.nav_tab_batches);
-        LinearLayout tabSuppliers = findViewById(R.id.nav_tab_suppliers);
-        LinearLayout tabManage = findViewById(R.id.nav_tab_manage);
-
-        tabOrders.setOnClickListener(v -> selectTab(TAB_ORDERS));
-        tabProducts.setOnClickListener(v -> selectTab(TAB_PRODUCTS));
-        tabBatches.setOnClickListener(v -> selectTab(TAB_BATCHES));
-        tabSuppliers.setOnClickListener(v -> selectTab(TAB_SUPPLIERS));
-        tabManage.setOnClickListener(v -> selectTab(TAB_MANAGE));
+        findViewById(R.id.nav_tab_orders).setOnClickListener(v -> selectTab(TAB_ORDERS));
+        findViewById(R.id.nav_tab_products).setOnClickListener(v -> selectTab(TAB_PRODUCTS));
+        findViewById(R.id.nav_tab_batches).setOnClickListener(v -> selectTab(TAB_BATCHES));
+        findViewById(R.id.nav_tab_suppliers).setOnClickListener(v -> selectTab(TAB_SUPPLIERS));
+        findViewById(R.id.nav_tab_manage).setOnClickListener(v -> selectTab(TAB_MANAGE));
 
         selectTab(TAB_ORDERS);
     }
@@ -83,41 +78,22 @@ public class MainActivity extends AppCompatActivity {
     private void selectTab(int index) {
         Fragment selected;
         switch (index) {
-            case TAB_ORDERS:
-                selected = new NhapHangFragment();
-                break;
-            case TAB_PRODUCTS:
-                selected = new SanPhamFragment();
-                break;
-            case TAB_BATCHES:
-                selected = new LoHangFragment();
-                break;
-            case TAB_SUPPLIERS:
-                selected = new NhaCungCapFragment();
-                break;
-            case TAB_MANAGE:
-                selected = new QuanLyFragment();
-                break;
-            default:
-                selected = new NhapHangFragment();
-                index = TAB_ORDERS;
-                break;
+            case TAB_ORDERS: selected = new NhapHangFragment(); break;
+            case TAB_PRODUCTS: selected = new SanPhamFragment(); break;
+            case TAB_BATCHES: selected = new LoHangFragment(); break;
+            case TAB_SUPPLIERS: selected = new NhaCungCapFragment(); break;
+            case TAB_MANAGE: selected = new QuanLyFragment(); break;
+            default: selected = new NhapHangFragment(); index = TAB_ORDERS; break;
         }
 
-        loadFragment(selected);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.frame_container, selected)
+                .commit();
 
         for (int i = 0; i < navIcons.length; i++) {
-            boolean isSelected = (i == index);
-            int color = isSelected ? ACTIVE_COLOR : INACTIVE_COLOR;
+            int color = (i == index) ? ACTIVE_COLOR : INACTIVE_COLOR;
             ImageViewCompat.setImageTintList(navIcons[i], ColorStateList.valueOf(color));
             navLabels[i].setTextColor(color);
         }
-    }
-
-    private void loadFragment(Fragment fragment) {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.frame_container, fragment)
-                .commit();
     }
 }
