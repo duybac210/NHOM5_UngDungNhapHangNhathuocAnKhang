@@ -13,16 +13,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.nhom5.pharma.R;
+import java.util.Date;
 
 public class ChiTietNhaCungCapActivity extends AppCompatActivity {
 
     private NhaCungCap ncc;
     private NhaCungCapRepository repository;
 
-    // View cho màn hình Chi tiết
     private TextView tvTen, tvMa, tvMST, tvSDT, tvEmail, tvDiaChi, tvGiaTri, tvTongDon;
-    
-    // View cho màn hình Chỉnh sửa
     private EditText edtSDT, edtEmail, edtDiaChi, edtMaNCC, edtMST;
     private TextView tvEditTen, tvEditTongDon, tvEditGiaTri;
 
@@ -30,7 +28,15 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         repository = NhaCungCapRepository.getInstance();
-        ncc = (NhaCungCap) getIntent().getSerializableExtra("NHA_CUNG_CAP");
+        
+        try {
+            ncc = (NhaCungCap) getIntent().getSerializableExtra("NHA_CUNG_CAP");
+        } catch (Exception e) {
+            Toast.makeText(this, "Lỗi dữ liệu", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+        
         showDetailLayout();
     }
 
@@ -38,7 +44,6 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chi_tiet_nha_cung_cap);
         initDetailViews();
         bindDataToDetail();
-
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnDelete).setOnClickListener(v -> showDeleteDialog());
         findViewById(R.id.btnEdit).setOnClickListener(v -> showEditLayout());
@@ -48,15 +53,14 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_edit_nha_cung_cap);
         initEditViews();
         bindDataToEdit();
-
         findViewById(R.id.btnBackEdit).setOnClickListener(v -> showDetailLayout());
         findViewById(R.id.btnCancelEdit).setOnClickListener(v -> showDetailLayout());
         findViewById(R.id.btnSaveEdit).setOnClickListener(v -> saveChanges());
     }
 
     private void initDetailViews() {
-        tvTen = findViewById(R.id.tvDetailTenNCC);
-        tvMa = findViewById(R.id.tvDetailMaNCC);
+        tvTen = findViewById(R.id.tvTenHeader);
+        tvMa = findViewById(R.id.tvMaHeader);
         tvMST = findViewById(R.id.tvDetailMST);
         tvSDT = findViewById(R.id.tvDetailSDT);
         tvEmail = findViewById(R.id.tvDetailEmail);
@@ -67,16 +71,14 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
 
     private void bindDataToDetail() {
         if (ncc == null) return;
-        tvTen.setText(ncc.getTenNCC());
-        tvMa.setText("Mã NCC: " + ncc.getId());
-        tvMST.setText("Mã số thuế: " + ncc.getMaSoThue());
-        tvSDT.setText(ncc.getSdt());
-        tvEmail.setText(ncc.getEmail());
-        tvDiaChi.setText(ncc.getDiaChi());
-        
-        // Lấy dữ liệu thật từ field TongDon và GiaTri trên Firestore
-        tvTongDon.setText(ncc.getTongDon() != null ? ncc.getTongDon() : "0");
-        tvGiaTri.setText(ncc.getGiaTri() != null ? ncc.getGiaTri() : "0");
+        tvTen.setText(ncc.getTenNCC() != null ? ncc.getTenNCC() : "Chưa có tên");
+        tvMa.setText("Mã NCC: " + (ncc.getId() != null ? ncc.getId() : "N/A"));
+        tvMST.setText(ncc.getMaSoThue() != null ? ncc.getMaSoThue() : "---");
+        tvSDT.setText(ncc.getSdt() != null ? ncc.getSdt() : "---");
+        tvEmail.setText(ncc.getEmail() != null ? ncc.getEmail() : "---");
+        tvDiaChi.setText(ncc.getDiaChi() != null ? ncc.getDiaChi() : "---");
+        tvTongDon.setText(ncc.getDisplayTongDon());
+        tvGiaTri.setText(ncc.getDisplayGiaTri());
     }
 
     private void initEditViews() {
@@ -92,58 +94,57 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
 
     private void bindDataToEdit() {
         if (ncc == null) return;
-        tvEditTen.setText(ncc.getTenNCC());
-        edtMaNCC.setText(ncc.getId());
-        edtMST.setText(ncc.getMaSoThue());
-        edtSDT.setText(ncc.getSdt());
-        edtEmail.setText(ncc.getEmail());
-        edtDiaChi.setText(ncc.getDiaChi());
-        
-        // Hiển thị dữ liệu thật trên màn hình sửa
-        tvEditTongDon.setText(ncc.getTongDon() != null ? ncc.getTongDon() : "0");
-        tvEditGiaTri.setText(ncc.getGiaTri() != null ? ncc.getGiaTri() : "0");
+        tvEditTen.setText(ncc.getTenNCC() != null ? ncc.getTenNCC() : "");
+        edtMaNCC.setText(ncc.getId() != null ? ncc.getId() : "");
+        edtMST.setText(ncc.getMaSoThue() != null ? ncc.getMaSoThue() : "");
+        edtSDT.setText(ncc.getSdt() != null ? ncc.getSdt() : "");
+        edtEmail.setText(ncc.getEmail() != null ? ncc.getEmail() : "");
+        edtDiaChi.setText(ncc.getDiaChi() != null ? ncc.getDiaChi() : "");
+        tvEditTongDon.setText(ncc.getDisplayTongDon());
+        tvEditGiaTri.setText(ncc.getDisplayGiaTri());
     }
 
     private void saveChanges() {
-        ncc.setSdt(edtSDT.getText().toString());
-        ncc.setEmail(edtEmail.getText().toString());
-        ncc.setDiaChi(edtDiaChi.getText().toString());
-
+        if (ncc == null) return;
+        ncc.setSdt(edtSDT.getText().toString().trim());
+        ncc.setEmail(edtEmail.getText().toString().trim());
+        ncc.setDiaChi(edtDiaChi.getText().toString().trim());
+        
+        // TỰ ĐỘNG CẬP NHẬT NGÀY GIỜ SỬA
+        ncc.setNgayCapNhat(new Date());
+        
         repository.updateNhaCungCap(ncc).addOnSuccessListener(aVoid -> {
             Toast.makeText(this, "Cập nhật thành công", Toast.LENGTH_SHORT).show();
             showDetailLayout();
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Lỗi cập nhật: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
 
     private void showDeleteDialog() {
+        if (ncc == null) return;
         final Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_confirm_delete_ncc);
-        dialog.setCancelable(true);
-
         Window window = dialog.getWindow();
         if (window != null) {
             window.setLayout(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT);
             window.setGravity(Gravity.CENTER); 
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
-
         TextView tvMsg = dialog.findViewById(R.id.tvDeleteMessage);
-        if (ncc != null) {
-            tvMsg.setText("Hệ thống sẽ xóa hoàn toàn nhà cung cấp " + ncc.getTenNCC() + " nhưng vẫn giữ những giao dịch lịch sử nếu có. Bạn có chắc là muốn xóa?");
-        }
+        String name = ncc.getTenNCC() != null ? ncc.getTenNCC() : "nhà cung cấp này";
+        tvMsg.setText("Hệ thống sẽ xóa hoàn toàn " + name + " nhưng vẫn giữ những giao dịch lịch sử nếu có. Bạn có chắc là muốn xóa?");
 
         dialog.findViewById(R.id.btnCloseDialog).setOnClickListener(v -> dialog.dismiss());
         dialog.findViewById(R.id.btnSkip).setOnClickListener(v -> dialog.dismiss());
-        
         dialog.findViewById(R.id.btnConfirmDelete).setOnClickListener(v -> {
-            repository.deleteNhaCungCap(ncc.getId()).addOnSuccessListener(aVoid -> {
+            repository.deactivateNhaCungCap(ncc.getId()).addOnSuccessListener(aVoid -> {
                 Toast.makeText(this, "Đã xóa nhà cung cấp", Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
                 finish();
             });
         });
-
         dialog.show();
     }
 }
