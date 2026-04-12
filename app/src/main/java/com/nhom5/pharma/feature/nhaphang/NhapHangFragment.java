@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -16,7 +17,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.Query;
 import com.nhom5.pharma.R;
 
@@ -24,7 +24,7 @@ public class NhapHangFragment extends Fragment {
 
     private RecyclerView recyclerViewNhapHang;
     private EditText searchEditText;
-    private FloatingActionButton fabAdd;
+    private ImageButton btnAddNew;
     private NhapHangAdapter adapter;
     private final NhapHangRepository repository = NhapHangRepository.getInstance();
 
@@ -33,15 +33,17 @@ public class NhapHangFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_nhap_hang, container, false);
+        
+        // Ánh xạ từ layout fragment và include layout
         recyclerViewNhapHang = view.findViewById(R.id.recyclerViewNhapHang);
         searchEditText = view.findViewById(R.id.searchEditText);
-        fabAdd = view.findViewById(R.id.fabAdd);
+        btnAddNew = view.findViewById(R.id.btnAddNew);
 
         setupRecyclerView();
         setupSearchFunctionality();
-
-        if (fabAdd != null) {
-            fabAdd.setOnClickListener(v -> {
+        
+        if (btnAddNew != null) {
+            btnAddNew.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), TaoDonNhapActivity.class);
                 startActivity(intent);
             });

@@ -7,7 +7,7 @@
     android:background="#f8f9fa"
     tools:context=".feature.nhaphang.NhapHangFragment">
 
-    <!-- Search Bar Section -->
+    <!-- Search Bar Section with Add Button -->
     <include
         android:id="@+id/search_bar"
         layout="@layout/layout_common_search_bar"
@@ -38,16 +38,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/item_nhap_hang" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAdd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_add"
-        app:backgroundTint="#48B645"
-        app:tint="@color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

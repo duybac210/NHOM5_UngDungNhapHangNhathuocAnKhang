@@ -7,4 +7,8 @@
     <string name="nav_batches">Lô hàng</string>
     <string name="nav_suppliers">Nhà cung cấp</string>
     <string name="nav_manage">Quản lý</string>
+    <string name="search_hint_generic">Tìm kiếm…</string>
+    <string name="search_icon_desc">Biểu tượng tìm kiếm</string>
+    <string name="add_new_desc">Thêm mới</string>
+    <string name="search_bar_title_orders">Quản lý đơn hàng</string>
 </resources>

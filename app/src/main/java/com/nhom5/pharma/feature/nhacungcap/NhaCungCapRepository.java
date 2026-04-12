@@ -2,6 +2,7 @@ package com.nhom5.pharma.feature.nhacungcap;
 
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -24,7 +25,19 @@ public class NhaCungCapRepository {
     }
 
     public Query getAllNhaCungCap() {
-        return collection.orderBy("tenNhaCungCap", Query.Direction.ASCENDING);
+        return collection.orderBy(FieldPath.documentId(), Query.Direction.ASCENDING);
+    }
+
+    public Query searchById(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllNhaCungCap();
+        }
+
+        String normalized = keyword.trim().toUpperCase();
+        return collection
+                .orderBy(FieldPath.documentId())
+                .startAt(normalized)
+                .endAt(normalized + "\uf8ff");
     }
 
     public Task<Void> updateNhaCungCap(NhaCungCap ncc) {

@@ -71,14 +71,7 @@ public class NhaCungCapFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String searchText = s.toString().trim();
-                Query newQuery;
-                if (searchText.isEmpty()) {
-                    newQuery = repository.getAllNhaCungCap();
-                } else {
-                    newQuery = repository.getAllNhaCungCap()
-                            .whereGreaterThanOrEqualTo("maNCC", searchText)
-                            .whereLessThanOrEqualTo("maNCC", searchText + "\uf8ff");
-                }
+                Query newQuery = repository.searchById(searchText);
                 
                 FirestoreRecyclerOptions<NhaCungCap> newOptions = new FirestoreRecyclerOptions.Builder<NhaCungCap>()
                         .setQuery(newQuery, NhaCungCap.class)
