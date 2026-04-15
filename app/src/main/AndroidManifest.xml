@@ -36,6 +36,21 @@
             android:exported="false"
             android:label="Chi tiết đơn nhập"
             android:theme="@style/Theme.PharmaImportManager" />
+
+        <activity
+            android:name=".feature.nhaphang.TaoDonNhapActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PharmaImportManager" />
+
+        <activity
+            android:name=".feature.sanpham.TaoSanPhamActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PharmaImportManager" />
+
+        <activity
+            android:name=".feature.nhacungcap.CreateSupplierActivity"
+            android:exported="false"
+            android:theme="@style/Theme.PharmaImportManager" />
     </application>
 
 </manifest>

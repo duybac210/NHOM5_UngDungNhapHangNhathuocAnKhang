@@ -24,7 +24,7 @@ public class NhaCungCapRepository {
     }
 
     public Query getAllNhaCungCap() {
-        return collection.orderBy("tenNCC", Query.Direction.ASCENDING);
+        return collection.orderBy("tenNhaCungCap", Query.Direction.ASCENDING);
     }
 
     public Task<Void> updateNhaCungCap(NhaCungCap ncc) {

@@ -25,7 +25,7 @@ public class NhapHangRepository {
 
     public Query getAllNhapHang() {
         return db.collection("NhapHang")
-                .orderBy("ngayTao", Query.Direction.DESCENDING);
+                .orderBy("createdAt", Query.Direction.DESCENDING);
     }
 
     public Query getAllLoHang() {
