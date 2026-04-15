@@ -6,7 +6,9 @@
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingStart="8dp"
-    android:paddingEnd="8dp">
+    android:paddingTop="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="6dp">
 
     <TextView
         android:id="@+id/tvSoLo"
@@ -16,8 +18,10 @@
         android:fontFamily="sans-serif"
         android:gravity="center"
         android:maxLines="1"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
         android:textColor="#000000"
-        android:textSize="12sp" />
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/tvHanSuDung"
@@ -27,8 +31,10 @@
         android:fontFamily="sans-serif"
         android:gravity="center"
         android:maxLines="1"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
         android:textColor="#000000"
-        android:textSize="12sp" />
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/tvMaHang"
@@ -38,8 +44,10 @@
         android:fontFamily="sans-serif"
         android:gravity="center"
         android:maxLines="1"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
         android:textColor="#1E3A8A"
-        android:textSize="12sp"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
     <TextView
@@ -50,8 +58,10 @@
         android:fontFamily="sans-serif"
         android:gravity="center"
         android:maxLines="1"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
         android:textColor="#000000"
-        android:textSize="12sp" />
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/tvSoLuong"
@@ -61,8 +71,10 @@
         android:fontFamily="sans-serif"
         android:gravity="center"
         android:maxLines="1"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
         android:textColor="#000000"
-        android:textSize="12sp" />
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/tvSoNgayConLai"
@@ -72,8 +84,10 @@
         android:fontFamily="sans-serif"
         android:gravity="center"
         android:maxLines="1"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
         android:textColor="#000000"
-        android:textSize="12sp" />
+        android:textSize="14sp" />
 
 </LinearLayout>
 

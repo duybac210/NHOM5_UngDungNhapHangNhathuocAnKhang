@@ -36,6 +36,12 @@
             android:exported="false"
             android:label="Chi tiết đơn nhập"
             android:theme="@style/Theme.PharmaImportManager" />
+
+        <activity
+            android:name=".feature.lohang.ChiTietLoHangActivity"
+            android:exported="false"
+            android:label="Chi tiết lô hàng"
+            android:theme="@style/Theme.PharmaImportManager" />
     </application>
 
 </manifest>
