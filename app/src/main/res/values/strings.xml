@@ -11,4 +11,12 @@
     <string name="search_icon_desc">Biểu tượng tìm kiếm</string>
     <string name="add_new_desc">Thêm mới</string>
     <string name="search_bar_title_orders">Quản lý đơn hàng</string>
+    <string name="search_batches_hint">Tìm kiếm theo số lô</string>
+    <string name="filter_icon_desc">Lọc</string>
+    <string name="batch_manage_title">Quản lý lô hàng</string>
+    <string name="filter_all">Tất cả</string>
+    <string name="filter_expiring_soon">Sắp hết hạn</string>
+    <string name="filter_expired">Hết hạn</string>
+    <string name="filter_low_stock">Số lượng thấp</string>
+    <string name="empty_lo_hang">Không có dữ liệu</string>
 </resources>

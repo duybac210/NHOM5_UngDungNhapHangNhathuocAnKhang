@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
+import com.nhom5.pharma.feature.lohang.LoHangFilterType;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -162,6 +163,20 @@ public class NhapHangRepository {
                 .endAt(keyword + "\uf8ff");
     }
 
+    public Query getLoHangByFilter(int filterType) {
+        switch (filterType) {
+            case LoHangFilterType.EXPIRING_SOON:
+            case LoHangFilterType.EXPIRED:
+                // 2 filter nay can tinh (hanSuDung - ngayNhap), xu ly o Adapter.
+                return getAllLoHang();
+            case LoHangFilterType.LOW_STOCK:
+                return getAllLoHang();
+            case LoHangFilterType.ALL:
+            default:
+                return getAllLoHang();
+        }
+    }
+
     public Task<DocumentSnapshot> getNhapHangById(String id) {
         return db.collection("NhapHang").document(id).get();
     }
@@ -179,6 +194,10 @@ public class NhapHangRepository {
         return db.collection("LoHang")
                 .whereEqualTo("maNhapHang", nhapHangId)
                 .get();
+    }
+
+    public Task<DocumentSnapshot> getLoHangById(String soLo) {
+        return db.collection("LoHang").document(soLo).get();
     }
 
     public Task<DocumentSnapshot> getProductById(String maSP) {

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/search_bg_rounded"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <RadioGroup
+        android:id="@+id/rgFilter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/rbAll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:buttonTint="@color/login_primary"
+            android:minHeight="36dp"
+            android:text="@string/filter_all"
+            android:textColor="@color/text_black"
+            android:textSize="13sp" />
+
+
+        <RadioButton
+            android:id="@+id/rbExpiringSoon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:buttonTint="@color/login_primary"
+            android:minHeight="36dp"
+            android:text="@string/filter_expiring_soon"
+            android:textColor="@color/text_black"
+            android:textSize="13sp" />
+
+        <RadioButton
+            android:id="@+id/rbExpired"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:buttonTint="@color/login_primary"
+            android:minHeight="36dp"
+            android:text="@string/filter_expired"
+            android:textColor="@color/text_black"
+            android:textSize="13sp" />
+
+        <RadioButton
+            android:id="@+id/rbLowStock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:buttonTint="@color/login_primary"
+            android:minHeight="36dp"
+            android:text="@string/filter_low_stock"
+            android:textColor="@color/text_black"
+            android:textSize="13sp" />
+    </RadioGroup>
+
+
+</LinearLayout>
+
