@@ -4,16 +4,15 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
 
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.firestore.Query;
@@ -22,14 +21,9 @@ import com.nhom5.pharma.feature.nhaphang.LoHang;
 import com.nhom5.pharma.feature.nhaphang.LoHangAdapter;
 import com.nhom5.pharma.feature.nhaphang.NhapHangRepository;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link LoHangFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class LoHangFragment extends Fragment {
 
-    private RecyclerView recyclerViewNhapHang;
+    private RecyclerView recyclerViewLoHang;
     private EditText searchEditText;
     private LoHangAdapter adapter;
     private final NhapHangRepository repository = NhapHangRepository.getInstance();
@@ -41,7 +35,7 @@ public class LoHangFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_lo_hang, container, false);
-        recyclerViewNhapHang = view.findViewById(R.id.recyclerViewNhapHang);
+        recyclerViewLoHang = view.findViewById(R.id.recyclerViewLoHang);
         searchEditText = view.findViewById(R.id.searchEditText);
 
         setupRecyclerView();
@@ -57,7 +51,7 @@ public class LoHangFragment extends Fragment {
 
         adapter = new LoHangAdapter(options);
 
-        recyclerViewNhapHang.setLayoutManager(new LinearLayoutManager(getContext()) {
+        recyclerViewLoHang.setLayoutManager(new LinearLayoutManager(getContext()) {
             @Override
             public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
                 try {
@@ -68,7 +62,7 @@ public class LoHangFragment extends Fragment {
             }
         });
 
-        recyclerViewNhapHang.setAdapter(adapter);
+        recyclerViewLoHang.setAdapter(adapter);
     }
 
     private void setupSearchFunctionality() {

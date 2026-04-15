@@ -32,7 +32,7 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:fontFamily="sans-serif"
-                android:hint="Tìm kiếm số lô"
+                android:hint="Tìm kiếm theo số lô, hạn sử dụng"
                 android:inputType="text"
                 android:textColorHint="#64748b"
                 android:textSize="14sp" />
