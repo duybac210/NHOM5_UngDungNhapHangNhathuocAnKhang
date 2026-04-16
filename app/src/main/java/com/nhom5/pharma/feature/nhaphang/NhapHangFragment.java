@@ -58,7 +58,7 @@ public class NhapHangFragment extends Fragment {
     private void setupRecyclerView() {
         Query query = repository.getAllNhapHang();
         FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
-                .setQuery(query, NhapHang.class)
+                .setQuery(query, NhapHang::fromDocument)
                 .build();
 
         adapter = new NhapHangAdapter(options);
@@ -85,7 +85,7 @@ public class NhapHangFragment extends Fragment {
                     Query query = repository.searchByMaDon(s.toString().toUpperCase());
 
                     FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
-                            .setQuery(query, NhapHang.class)
+                            .setQuery(query, NhapHang::fromDocument)
                             .build();
                     adapter.updateOptions(options);
                 }

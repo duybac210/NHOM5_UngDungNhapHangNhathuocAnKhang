@@ -92,24 +92,21 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
         if (nhapHangId == null) return;
         repository.getNhapHangById(nhapHangId).addOnSuccessListener(doc -> {
             if (doc.exists()) {
-                NhapHang nhapHang = doc.toObject(NhapHang.class);
-                if (nhapHang != null) {
-                    nhapHang.setId(doc.getId());
-                    displayNhapHangInfo(nhapHang);
-                    
-                    if (nhapHang.getMaNCC() != null) {
-                        fetchSupplierName(nhapHang.getMaNCC());
-                    }
-                    
-                    // Truy vấn tên người dùng thay vì để cứng Admin
-                    if (nhapHang.getMaNguoiNhap() != null) {
-                        fetchUserName(nhapHang.getMaNguoiNhap());
-                    } else {
-                        tvNguoiNhap.setText("Không xác định");
-                    }
-                    
-                    fetchLoHangList(doc.getId());
+                NhapHang nhapHang = NhapHang.fromDocument(doc);
+                displayNhapHangInfo(nhapHang);
+
+                if (nhapHang.getMaNCC() != null) {
+                    fetchSupplierName(nhapHang.getMaNCC());
                 }
+
+                // Truy vấn tên người dùng thay vì để cứng Admin
+                if (nhapHang.getMaNguoiNhap() != null) {
+                    fetchUserName(nhapHang.getMaNguoiNhap());
+                } else {
+                    tvNguoiNhap.setText("Không xác định");
+                }
+
+                fetchLoHangList(doc.getId());
             }
         });
     }
