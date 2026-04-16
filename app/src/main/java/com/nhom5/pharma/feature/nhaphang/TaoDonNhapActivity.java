@@ -16,9 +16,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.nhom5.pharma.MainActivity;
 import com.nhom5.pharma.R;
@@ -29,8 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TaoDonNhapActivity extends AppCompatActivity {
+
+    private static final Pattern IMPORT_ID_PATTERN = Pattern.compile("^NH(\\d+)$");
 
     private RecyclerView recyclerView;
     private SelectedProductAdapter adapter;
@@ -65,14 +69,14 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         initViews();
+        setupBackNavigation();
         setupRecyclerView();
         setupSpinners();
         loadSuppliersFromFirebase();
         updateAddBatchButtonVisibility();
-        
-        findViewById(R.id.ivBack).setOnClickListener(v -> finish());
+
         findViewById(R.id.btnCancel).setOnClickListener(v -> finish());
-        
+
         findViewById(R.id.btnAddProduct).setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);
             intent.putExtra("SELECT_MODE", true);
@@ -82,6 +86,10 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         etImportDate.setOnClickListener(v -> showDatePicker());
         btnSave.setOnClickListener(v -> saveOrderWithAutoIncrementId());
         updateDateLabel();
+    }
+
+    private void setupBackNavigation() {
+        findViewById(R.id.ivBack).setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
     }
 
     private void initViews() {
@@ -108,12 +116,19 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                 supplierNames.clear();
                 for (QueryDocumentSnapshot document : task.getResult()) {
                     String name = document.getString("tenNhaCungCap");
+                    if (name == null || name.trim().isEmpty()) {
+                        name = document.getString("tenNCC");
+                    }
+                    if (name == null || name.trim().isEmpty()) {
+                        name = document.getString("ten");
+                    }
                     if (name != null) {
                         supplierIds.add(document.getId());
                         supplierNames.add(name);
                     }
                 }
                 if (supplierNames.isEmpty()) {
+                    supplierIds.add("");
                     supplierNames.add("Chưa có nhà cung cấp");
                 }
                 supplierAdapter.notifyDataSetChanged();
@@ -131,45 +146,66 @@ public class TaoDonNhapActivity extends AppCompatActivity {
 
         btnSave.setEnabled(false);
         db.collection("NhapHang")
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .limit(1)
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    String nextId = "DN000001";
-                    if (!queryDocumentSnapshots.isEmpty()) {
-                        String lastId = queryDocumentSnapshots.getDocuments().get(0).getId();
-                        if (lastId.startsWith("DN")) {
-                            try {
-                                String numStr = lastId.substring(2);
-                                int number = Integer.parseInt(numStr);
-                                nextId = String.format("DN%06d", number + 1);
-                            } catch (Exception e) {
-                                saveOrderToFirebase(null);
-                                return;
-                            }
-                        }
-                    }
-                    saveOrderToFirebase(nextId);
-                })
+                .addOnSuccessListener(queryDocumentSnapshots -> saveOrderToFirebase(buildNextImportId(queryDocumentSnapshots.getDocuments())))
                 .addOnFailureListener(e -> {
                     btnSave.setEnabled(true);
                     Toast.makeText(this, "Lỗi kiểm tra ID: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
+    private String buildNextImportId(List<? extends DocumentSnapshot> documents) {
+        long maxNumber = 0;
+        int maxDigits = 4;
+
+        for (DocumentSnapshot document : documents) {
+            String[] candidates = new String[] { document.getId(), document.getString("maID") };
+            for (String candidate : candidates) {
+                long number = extractImportIdNumber(candidate);
+                if (number < 0) {
+                    continue;
+                }
+
+                maxNumber = Math.max(maxNumber, number);
+                maxDigits = Math.max(maxDigits, candidate.trim().length() - 2);
+            }
+        }
+
+        return String.format(Locale.getDefault(), "NH%0" + maxDigits + "d", maxNumber + 1);
+    }
+
+    private long extractImportIdNumber(String rawId) {
+        if (rawId == null) {
+            return -1;
+        }
+
+        Matcher matcher = IMPORT_ID_PATTERN.matcher(rawId.trim());
+        if (!matcher.matches()) {
+            return -1;
+        }
+
+        try {
+            return Long.parseLong(matcher.group(1));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
     private void saveOrderToFirebase(String customId) {
         int supplierPos = spnSupplier.getSelectedItemPosition();
-        if (supplierPos < 0 || supplierNames.get(0).equals("Chưa có nhà cung cấp")) {
+        if (supplierPos < 0 || supplierNames.isEmpty() || "Chưa có nhà cung cấp".equals(supplierNames.get(0))) {
             Toast.makeText(this, "Vui lòng chọn nhà cung cấp", Toast.LENGTH_SHORT).show();
             btnSave.setEnabled(true);
             return;
         }
 
         Map<String, Object> order = new HashMap<>();
+        int statusValue = spnStatus.getSelectedItemPosition() == 1 ? 1 : 0;
         order.put("maNhaCungCap", supplierIds.get(supplierPos));
         order.put("tenNhaCungCap", supplierNames.get(supplierPos));
+        order.put("maID", customId);
         order.put("ngayNhap", new Timestamp(calendar.getTime()));
-        order.put("trangThai", spnStatus.getSelectedItemPosition() == 2 ? 1 : 0);
+        order.put("trangThai", statusValue);
         order.put("trangThaiText", spnStatus.getSelectedItem().toString());
         order.put("hinhThucThanhToan", spnPayment.getSelectedItem().toString());
         order.put("tongTien", currentTotal);
@@ -222,7 +258,7 @@ public class TaoDonNhapActivity extends AppCompatActivity {
     }
 
     private void setupSpinners() {
-        String[] statusArray = {"Nháp", "Chờ nhập kho", "Đã nhập kho", "Đã hủy"};
+        String[] statusArray = {"Đã hủy", "Đã nhập kho"};
         ArrayAdapter<String> statusAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, statusArray);
         statusAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spnStatus.setAdapter(statusAdapter);

@@ -100,8 +100,10 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         } else {
             List<Product> filtered = new ArrayList<>();
             for (Product p : fullList) {
-                if ((p.getTenSP() != null && p.getTenSP().toLowerCase().contains(query.toLowerCase())) || 
-                    (p.getId() != null && p.getId().toLowerCase().contains(query.toLowerCase()))) {
+                String normalizedId = p.getDisplayId();
+                if ((p.getTenSP() != null && p.getTenSP().toLowerCase().contains(query.toLowerCase())) ||
+                    (p.getId() != null && p.getId().toLowerCase().contains(query.toLowerCase())) ||
+                    (normalizedId != null && normalizedId.toLowerCase().contains(query.toLowerCase()))) {
                     filtered.add(p);
                 }
             }
@@ -146,7 +148,7 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         EditText etNuocSX = dialogView.findViewById(R.id.et_nuoc_sx);
 
         if (product != null) {
-            etMaHang.setText(product.getId());
+            etMaHang.setText(product.getDisplayId());
             etMaVach.setText(product.getMaVach());
             etTenHang.setText(product.getTenSP());
             etGiaVon.setText(String.format(Locale.getDefault(), "%.0f", product.getGiavon()));

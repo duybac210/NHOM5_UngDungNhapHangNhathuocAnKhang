@@ -118,7 +118,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         }
 
         void bind(Product product, boolean isExpanded, boolean selectMode) {
-            tvMaHang.setText(product.getId());
+            tvMaHang.setText(product.getDisplayId());
             tvTenHang.setText(product.getTenSP());
             tvGiaVon.setText(String.format(Locale.getDefault(), "%,.0fđ", product.getGiavon()));
             tvThoiGian.setText(product.getNgayTao() != null ? sdf.format(product.getNgayTao()) : "");
@@ -136,7 +136,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
             if (isExpanded) {
                 tvDetailTen.setText(product.getTenSP());
-                tvDetailMaHang.setText(product.getId());
+                tvDetailMaHang.setText(product.getDisplayId());
                 tvDetailMoTa.setText(product.getMoTa() != null ? product.getMoTa() : "Chưa có");
                 tvDetailGiaVon.setText(String.format(Locale.getDefault(), "%,.0fđ", product.getGiavon()));
             }

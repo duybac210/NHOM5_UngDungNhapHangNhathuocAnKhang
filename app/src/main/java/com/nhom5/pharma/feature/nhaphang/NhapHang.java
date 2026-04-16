@@ -14,7 +14,7 @@ public class NhapHang {
     private String maNguoiNhap;
     private String tenNhaCungCap;
     private double tongTien;
-    private int trangThai; // 1 = đã nhập, khác = chờ xử lý
+    private Object trangThai; // Hỗ trợ int / boolean / String từ dữ liệu Firestore cũ và mới
     private Date ngayNhap;
     @ServerTimestamp
     private Date createdAt;
@@ -40,8 +40,8 @@ public class NhapHang {
     public double getTongTien() { return tongTien; }
     public void setTongTien(double tongTien) { this.tongTien = tongTien; }
 
-    public int getTrangThai() { return trangThai; }
-    public void setTrangThai(int trangThai) { this.trangThai = trangThai; }
+    public int getTrangThaiValue() { return parseTrangThai(trangThai); }
+    public void setTrangThai(Object trangThai) { this.trangThai = trangThai; }
 
     public Date getNgayNhap() { return ngayNhap; }
     public void setNgayNhap(Date ngayNhap) { this.ngayNhap = ngayNhap; }
@@ -56,8 +56,41 @@ public class NhapHang {
     public String getMaNCC() { return maNhaCungCap; }
     public void setMaNCC(String maNCC) { this.maNhaCungCap = maNCC; }
 
+    public String getDisplayId() {
+        if (maID != null && !maID.trim().isEmpty()) {
+            return maID.trim();
+        }
+        return id;
+    }
+
     public Date getNgayTao() { return ngayNhap != null ? ngayNhap : createdAt; }
     public void setNgayTao(Date ngayTao) { this.createdAt = ngayTao; }
 
-    public boolean isTrangThai() { return trangThai == 1; }
+    public boolean isTrangThai() { return getTrangThaiValue() == 1; }
+
+    public String getTrangThaiLabel() {
+        if (getTrangThaiValue() == 1) {
+            return "Đã nhập kho";
+        }
+        return "Đã hủy";
+    }
+
+    private int parseTrangThai(Object value) {
+        if (value == null) {
+            return 0;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue() == 1 ? 1 : 0;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value ? 1 : 0;
+        }
+        if (value instanceof String) {
+            String s = ((String) value).trim();
+            if ("1".equals(s) || "true".equalsIgnoreCase(s) || "đã nhập".equalsIgnoreCase(s) || "đã nhập kho".equalsIgnoreCase(s)) {
+                return 1;
+            }
+        }
+        return 0;
+    }
 }

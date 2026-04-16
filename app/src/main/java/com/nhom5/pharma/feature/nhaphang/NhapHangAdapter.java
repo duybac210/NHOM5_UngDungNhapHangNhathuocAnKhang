@@ -22,8 +22,12 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
 
     @Override
     protected void onBindViewHolder(@NonNull NhapHangViewHolder holder, int position, @NonNull NhapHang model) {
-        String id = getSnapshots().getSnapshot(position).getId();
-        holder.tvMaDon.setText(id);
+        String documentId = getSnapshots().getSnapshot(position).getId();
+        String displayId = model.getDisplayId();
+        if (displayId == null || displayId.trim().isEmpty()) {
+            displayId = documentId;
+        }
+        holder.tvMaDon.setText(displayId);
 
         if (model.getNgayTao() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
@@ -33,8 +37,9 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         // Bỏ khoảng trống: "%,.0f đ" -> "%,.0fđ"
         holder.tvTongTien.setText(String.format(Locale.getDefault(), "%,.0fđ", model.getTongTien()));
 
-        if (model.isTrangThai()) {
-            holder.tvTrangThai.setText("Đã nhập hàng");
+        int trangThai = model.getTrangThaiValue();
+        if (trangThai == 1) {
+            holder.tvTrangThai.setText("Đã nhập kho");
             holder.tvTrangThai.setTextColor(Color.parseColor("#4CAF50"));
         } else {
             holder.tvTrangThai.setText("Đã hủy");
@@ -43,7 +48,7 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ChiTietNhapHangActivity.class);
-            intent.putExtra("NHAP_HANG_ID", id);
+            intent.putExtra("NHAP_HANG_ID", documentId);
             v.getContext().startActivity(intent);
         });
     }

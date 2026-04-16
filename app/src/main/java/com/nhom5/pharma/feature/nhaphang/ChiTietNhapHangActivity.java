@@ -95,6 +95,9 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                 NhapHang nhapHang = doc.toObject(NhapHang.class);
                 if (nhapHang != null) {
                     nhapHang.setId(doc.getId());
+                    if (nhapHang.getMaID() == null || nhapHang.getMaID().trim().isEmpty()) {
+                        nhapHang.setMaID(doc.getId());
+                    }
                     displayNhapHangInfo(nhapHang);
                     
                     if (nhapHang.getMaNCC() != null) {
@@ -115,9 +118,10 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
     }
 
     private void displayNhapHangInfo(NhapHang nhapHang) {
-        tvOrderCodeTitle.setText(nhapHang.getId());
-        if (nhapHang.isTrangThai()) {
-            tvTrangThaiHeader.setText("Đã nhập hàng");
+        tvOrderCodeTitle.setText(nhapHang.getDisplayId());
+        int trangThai = nhapHang.getTrangThaiValue();
+        if (trangThai == 1) {
+            tvTrangThaiHeader.setText("Đã nhập kho");
             tvTrangThaiHeader.setTextColor(Color.parseColor("#4CAF50"));
         } else {
             tvTrangThaiHeader.setText("Đã hủy");

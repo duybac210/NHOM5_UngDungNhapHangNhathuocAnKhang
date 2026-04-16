@@ -7,16 +7,18 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.nhom5.pharma.R;
 import com.nhom5.pharma.util.SuccessDialogHelper;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Locale;
+import java.util.Calendar;
 
 public class TaoSanPhamActivity extends AppCompatActivity {
 
     private EditText etName, etCostPrice, etSellingPrice, etManufacturer, etCountry;
+    private EditText etCreatedTime;
     private Button btnSave, btnCancel;
     private FirebaseFirestore db;
 
@@ -26,21 +28,32 @@ public class TaoSanPhamActivity extends AppCompatActivity {
         setContentView(R.layout.activity_tao_san_pham);
 
         db = FirebaseFirestore.getInstance();
+        ProductSchemaSync.syncOnce(db);
         initViews();
+        setupBackNavigation();
+        setCreatedTimeNow();
 
-        findViewById(R.id.ivBack).setOnClickListener(v -> finish());
         btnCancel.setOnClickListener(v -> finish());
         btnSave.setOnClickListener(v -> generateIDAndSave());
     }
 
+    private void setupBackNavigation() {
+        findViewById(R.id.ivBack).setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
+    }
+
     private void initViews() {
         etName = findViewById(R.id.etProductName);
+        etCreatedTime = findViewById(R.id.etCreatedTime);
         etCostPrice = findViewById(R.id.etCostPrice);
         etSellingPrice = findViewById(R.id.etSellingPrice);
         etManufacturer = findViewById(R.id.etManufacturer);
         etCountry = findViewById(R.id.etCountry);
         btnSave = findViewById(R.id.btnSave);
         btnCancel = findViewById(R.id.btnCancel);
+
+        // Thời gian tạo chỉ hiển thị tự động theo ngày hiện tại, không cho chỉnh tay.
+        etCreatedTime.setKeyListener(null);
+        etCreatedTime.setClickable(false);
     }
 
     private void generateIDAndSave() {
@@ -52,18 +65,9 @@ public class TaoSanPhamActivity extends AppCompatActivity {
 
         btnSave.setEnabled(false);
         db.collection("SanPham")
-                .orderBy("maID", Query.Direction.DESCENDING)
-                .limit(1)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    String nextId = "SP00001";
-                    if (!queryDocumentSnapshots.isEmpty()) {
-                        String lastId = queryDocumentSnapshots.getDocuments().get(0).getString("maID");
-                        if (lastId != null && lastId.startsWith("SP")) {
-                            int num = Integer.parseInt(lastId.substring(2));
-                            nextId = String.format(Locale.getDefault(), "SP%05d", num + 1);
-                        }
-                    }
+                    String nextId = Product.buildNextProductId(queryDocumentSnapshots.getDocuments());
                     saveProduct(nextId);
                 })
                 .addOnFailureListener(e -> {
@@ -81,17 +85,13 @@ public class TaoSanPhamActivity extends AppCompatActivity {
         product.put("tenSP", etName.getText().toString().trim());
         product.put("giavon", costPrice);
         product.put("giaBan", sellingPrice);
+        product.put("maVach", "");
+        product.put("moTa", "");
         product.put("hangSX", etManufacturer.getText().toString().trim());
         product.put("nuocSX", etCountry.getText().toString().trim());
         product.put("trangThai", true);
         product.put("ngayTao", com.google.firebase.firestore.FieldValue.serverTimestamp());
         product.put("ngayCapNhat", com.google.firebase.firestore.FieldValue.serverTimestamp());
-
-        // Legacy / cross-screen aliases so other screens still read the same data safely.
-        product.put("tenSanPham", etName.getText().toString().trim());
-        product.put("giaVon", costPrice);
-        product.put("hangSanXuat", etManufacturer.getText().toString().trim());
-        product.put("nuocSanXuat", etCountry.getText().toString().trim());
         product.put("createdAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
 
         db.collection("SanPham").document(maID).set(product)
@@ -104,5 +104,10 @@ public class TaoSanPhamActivity extends AppCompatActivity {
                     btnSave.setEnabled(true);
                     Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void setCreatedTimeNow() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        etCreatedTime.setText(sdf.format(Calendar.getInstance().getTime()));
     }
 }
