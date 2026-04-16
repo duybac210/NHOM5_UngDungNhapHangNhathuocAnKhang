@@ -92,6 +92,7 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
         if (nhapHangId == null) return;
         repository.getNhapHangById(nhapHangId).addOnSuccessListener(doc -> {
             if (doc.exists()) {
+<<<<<<< HEAD
                 NhapHang nhapHang = doc.toObject(NhapHang.class);
                 if (nhapHang != null) {
                     nhapHang.setId(doc.getId());
@@ -112,7 +113,23 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                     }
                     
                     fetchLoHangList(doc.getId());
+=======
+                NhapHang nhapHang = NhapHang.fromDocument(doc);
+                displayNhapHangInfo(nhapHang);
+
+                if (nhapHang.getMaNCC() != null) {
+                    fetchSupplierName(nhapHang.getMaNCC());
+>>>>>>> e393154 (Cập nhật logic xử lý nhập hàng)
                 }
+
+                // Truy vấn tên người dùng thay vì để cứng Admin
+                if (nhapHang.getMaNguoiNhap() != null) {
+                    fetchUserName(nhapHang.getMaNguoiNhap());
+                } else {
+                    tvNguoiNhap.setText("Không xác định");
+                }
+
+                fetchLoHangList(doc.getId());
             }
         });
     }
