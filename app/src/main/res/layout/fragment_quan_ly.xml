@@ -189,21 +189,6 @@
                                 android:textStyle="bold"
                                 android:textSize="14sp" />
 
-                            <!-- Nút chỉnh sửa thông tin -->
-                            <TextView
-                                android:id="@+id/btnEditProfile"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="end"
-                                android:layout_marginTop="16dp"
-                                android:background="?attr/selectableItemBackground"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:padding="8dp"
-                                android:text="Chỉnh sửa thông tin"
-                                android:textColor="@color/login_primary"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
 

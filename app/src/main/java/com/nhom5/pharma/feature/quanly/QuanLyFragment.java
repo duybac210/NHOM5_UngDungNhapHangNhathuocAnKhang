@@ -10,6 +10,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,19 +31,18 @@ import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.WriteBatch;
 import com.nhom5.pharma.R;
 import com.nhom5.pharma.feature.dangnhap.DangNhapActivity;
+import com.nhom5.pharma.util.SecurityUtils;
 
 public class QuanLyFragment extends Fragment {
 
     private RelativeLayout btnBasicInfo, btnChangePassword, btnBackup, btnLogout;
     private LinearLayout expandableBasicInfo;
     private ImageView ivArrowBasicInfo;
-    private TextView tvUserNameHeader, tvFullNameDetail, tvPhoneDetail, tvEmailDetail, tvAddressDetail, btnEditProfile;
+    private TextView tvUserNameHeader, tvFullNameDetail, tvPhoneDetail, tvEmailDetail, tvAddressDetail;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private boolean isBasicInfoExpanded = false;
@@ -74,7 +74,6 @@ public class QuanLyFragment extends Fragment {
         tvPhoneDetail = view.findViewById(R.id.tvPhoneDetail);
         tvEmailDetail = view.findViewById(R.id.tvEmailDetail);
         tvAddressDetail = view.findViewById(R.id.tvAddressDetail);
-        btnEditProfile = view.findViewById(R.id.btnEditProfile);
 
         btnBasicInfo = view.findViewById(R.id.btnBasicInfo);
         expandableBasicInfo = view.findViewById(R.id.expandableBasicInfo);
@@ -100,6 +99,7 @@ public class QuanLyFragment extends Fragment {
                     if (!queryDocumentSnapshots.isEmpty()) {
                         QueryDocumentSnapshot doc = (QueryDocumentSnapshot) queryDocumentSnapshots.getDocuments().get(0);
                         currentDocId = doc.getId();
+                        Log.d("QuanLyFragment", "Current User Doc ID: " + currentDocId);
                         
                         String tenNguoiDung = doc.getString("tenNguoiDung");
                         currentMaChiNhanh = doc.getString("maChiNhanh");
@@ -134,7 +134,6 @@ public class QuanLyFragment extends Fragment {
             ivArrowBasicInfo.setRotation(isBasicInfoExpanded ? 90 : 0);
         });
 
-        btnEditProfile.setOnClickListener(v -> showEditProfileDialog());
         btnChangePassword.setOnClickListener(v -> showChangePasswordDialog());
         btnBackup.setOnClickListener(v -> showBackupInfoDialog());
 
@@ -149,80 +148,11 @@ public class QuanLyFragment extends Fragment {
 
     private void showBackupInfoDialog() {
         new AlertDialog.Builder(getContext())
-                .setTitle("Sao lưu & Phục hồi")
+                .setTitle("Sao lưu \u0026 Phục hồi")
                 .setIcon(R.drawable.ic_backup)
                 .setMessage("Dữ liệu của bạn luôn được hệ thống tự động đồng bộ hóa an toàn trên đám mây của Pharma An Khang.")
                 .setPositiveButton("Đã hiểu", (dialog, which) -> dialog.dismiss())
                 .show();
-    }
-
-    private void showEditProfileDialog() {
-        if (currentDocId.isEmpty()) {
-            Toast.makeText(getContext(), "Vui lòng đợi tải dữ liệu...", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        final Dialog dialog = new Dialog(getContext());
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_edit_profile);
-        
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        }
-
-        EditText etName = dialog.findViewById(R.id.etEditFullName);
-        EditText etPhone = dialog.findViewById(R.id.etEditPhone);
-        EditText etAddr = dialog.findViewById(R.id.etEditAddress);
-        Button btnSave = dialog.findViewById(R.id.btnSaveProfile);
-
-        String oldName = tvFullNameDetail.getText().toString();
-        String oldPhone = tvPhoneDetail.getText().toString();
-        String oldAddr = tvAddressDetail.getText().toString();
-        
-        etName.setText(oldName.equals("---") ? "" : oldName);
-        etPhone.setText(oldPhone.equals("---") ? "" : oldPhone);
-        etAddr.setText(oldAddr.equals("---") ? "" : oldAddr);
-
-        btnSave.setEnabled(false);
-        TextWatcher editWatcher = new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String n = etName.getText().toString().trim();
-                String p = etPhone.getText().toString().trim();
-                String a = etAddr.getText().toString().trim();
-                btnSave.setEnabled(!n.isEmpty() && (!n.equals(oldName) || !p.equals(oldPhone) || !a.equals(oldAddr)));
-            }
-            @Override public void afterTextChanged(Editable s) {}
-        };
-        etName.addTextChangedListener(editWatcher);
-        etPhone.addTextChangedListener(editWatcher);
-        etAddr.addTextChangedListener(editWatcher);
-
-        btnSave.setOnClickListener(v -> {
-            String n = etName.getText().toString().trim();
-            String p = etPhone.getText().toString().trim();
-            String a = etAddr.getText().toString().trim();
-
-            WriteBatch batch = db.batch();
-            DocumentReference userRef = db.collection("TaiKhoan").document(currentDocId);
-            batch.update(userRef, "tenNguoiDung", n);
-
-            if (currentMaChiNhanh != null && !currentMaChiNhanh.isEmpty()) {
-                DocumentReference branchRef = db.collection("ChiNhanh").document(currentMaChiNhanh);
-                batch.update(branchRef, "sdt", p, "diaChi", a);
-            }
-
-            batch.commit().addOnSuccessListener(aVoid -> {
-                Toast.makeText(getContext(), "Cập nhật thành công!", Toast.LENGTH_SHORT).show();
-                tvUserNameHeader.setText(n);
-                tvFullNameDetail.setText(n);
-                tvPhoneDetail.setText(p);
-                tvAddressDetail.setText(a);
-                dialog.dismiss();
-            }).addOnFailureListener(e -> Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show());
-        });
-        dialog.show();
     }
 
     private void showChangePasswordDialog() {
@@ -279,42 +209,63 @@ public class QuanLyFragment extends Fragment {
             FirebaseUser user = mAuth.getCurrentUser();
             if (user == null) return;
 
+            btnSave.setEnabled(false);
+            btnSave.setText("Đang xử lý...");
+
             if (layoutCur.getVisibility() == View.VISIBLE) {
                 String curP = etCur.getText().toString().trim();
                 user.reauthenticate(EmailAuthProvider.getCredential(user.getEmail(), curP))
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            // Cập nhật Auth trước
-                            user.updatePassword(newP).addOnCompleteListener(t -> {
-                                if (t.isSuccessful()) {
-                                    // CẬP NHẬT TIẾP VÀO FIRESTORE
-                                    if (!currentDocId.isEmpty()) {
-                                        db.collection("TaiKhoan").document(currentDocId).update("matKhau", newP);
-                                    }
-                                    dialog.dismiss(); 
-                                    Toast.makeText(getContext(), "Đổi mật khẩu thành công!", Toast.LENGTH_SHORT).show(); 
-                                }
-                            });
-                        } else Toast.makeText(getContext(), "Mật khẩu cũ sai", Toast.LENGTH_SHORT).show();
+                            updateUserPassword(user, newP, dialog);
+                        } else {
+                            btnSave.setEnabled(true);
+                            btnSave.setText("Lưu thay đổi");
+                            Toast.makeText(getContext(), "Mật khẩu cũ không chính xác", Toast.LENGTH_SHORT).show();
+                        }
                     });
             } else {
-                user.updatePassword(newP).addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        // CẬP NHẬT TIẾP VÀO FIRESTORE
-                        if (!currentDocId.isEmpty()) {
-                            db.collection("TaiKhoan").document(currentDocId).update("matKhau", newP);
-                        }
-                        dialog.dismiss(); 
-                        Toast.makeText(getContext(), "Đổi mật khẩu thành công!", Toast.LENGTH_SHORT).show(); 
-                    }
-                    else if (task.getException() instanceof FirebaseAuthRecentLoginRequiredException) {
-                        layoutCur.setVisibility(View.VISIBLE);
-                        dialog.findViewById(R.id.tvCurrentPasswordLabel).setVisibility(View.VISIBLE);
-                        btnSave.setEnabled(false);
-                    }
-                });
+                updateUserPassword(user, newP, dialog);
             }
         });
         dialog.show();
+    }
+
+    private void updateUserPassword(FirebaseUser user, String newP, Dialog dialog) {
+        user.updatePassword(newP).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                if (!currentDocId.isEmpty()) {
+                    String encryptedPassword = SecurityUtils.encrypt(newP);
+                    db.collection("TaiKhoan").document(currentDocId)
+                        .update("matKhau", encryptedPassword)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("QuanLyFragment", "Firestore password updated with AES: " + encryptedPassword);
+                            Toast.makeText(getContext(), "Đổi mật khẩu thành công!", Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("QuanLyFragment", "Error updating Firestore", e);
+                            Toast.makeText(getContext(), "Lỗi cập nhật Firestore", Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                        });
+                } else {
+                    Toast.makeText(getContext(), "Đổi thành công (Auth), nhưng không tìm thấy Doc ID", Toast.LENGTH_LONG).show();
+                    dialog.dismiss();
+                }
+            } else {
+                if (task.getException() instanceof FirebaseAuthRecentLoginRequiredException) {
+                    View layoutCur = dialog.findViewById(R.id.layoutCurrentPassword);
+                    layoutCur.setVisibility(View.VISIBLE);
+                    dialog.findViewById(R.id.tvCurrentPasswordLabel).setVisibility(View.VISIBLE);
+                    Button btnSave = dialog.findViewById(R.id.btnSavePassword);
+                    btnSave.setEnabled(false);
+                    btnSave.setText("Lưu thay đổi");
+                    Toast.makeText(getContext(), "Vui lòng xác thực lại mật khẩu cũ", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Lỗi: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                }
+            }
+        });
     }
 }

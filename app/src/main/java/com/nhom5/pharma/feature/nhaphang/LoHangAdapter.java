@@ -1,7 +1,6 @@
 package com.nhom5.pharma.feature.nhaphang;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,60 +12,251 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.Timestamp;
 import com.nhom5.pharma.R;
+import com.nhom5.pharma.feature.lohang.ChiTietLoHangActivity;
+import com.nhom5.pharma.feature.lohang.LoHangFilterType;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapter.LoHangViewHolder> {
 
+    public interface OnFilteredCountChangedListener {
+        void onChanged(int filteredCount);
+    }
+
+    private int activeFilterType = LoHangFilterType.ALL;
+    private final OnFilteredCountChangedListener countChangedListener;
+
     public LoHangAdapter(@NonNull FirestoreRecyclerOptions<LoHang> options) {
+        this(options, null);
+    }
+
+    public LoHangAdapter(@NonNull FirestoreRecyclerOptions<LoHang> options,
+                         OnFilteredCountChangedListener countChangedListener) {
         super(options);
+        this.countChangedListener = countChangedListener;
+    }
+
+    public void setActiveFilterType(int filterType) {
+        this.activeFilterType = filterType;
+        notifyDataSetChanged();
+        notifyFilteredCount();
     }
 
     @Override
     protected void onBindViewHolder(@NonNull LoHangViewHolder holder, int position, @NonNull LoHang model) {
-        String soLo = getSnapshots().getSnapshot(position).getId();
-        holder.tvMaDon.setText(soLo);
+        DocumentSnapshot snapshot = getSnapshots().getSnapshot(position);
 
-        holder.tvNgayNhap.setText(TextUtils.isEmpty(model.getMaNhapHang()) ? "-" : model.getMaNhapHang());
+        String soLo = snapshot.getId();
+        Date hanSuDung = firstDate(snapshot, "hanSuDung", "HanSuDung", "hansudung");
+        String maHang = firstNonEmpty(snapshot, "maHang", "MaHang", "maSP", "MaSP", "maNhapHang", "MaNhapHang");
+        Date ngayNhap = firstDate(snapshot, "ngayNhap", "NgayNhap", "ngayTao", "createdAt");
+        double soLuong = firstNumber(snapshot, model.getSoLuong(), "soLuong", "SoLuong");
+        long soNgayConLai = calcRemainingDays(ngayNhap, hanSuDung);
+        boolean shouldDisplay = matchesCurrentFilter(soNgayConLai, soLuong);
 
-        double thanhTien = model.getSoLuong() * model.getDonGiaNhap();
-        holder.tvTongTien.setText(String.format(Locale.getDefault(), "%,.0fđ", thanhTien));
+        RecyclerView.LayoutParams layoutParams = (RecyclerView.LayoutParams) holder.itemView.getLayoutParams();
+        if (layoutParams == null) {
+            layoutParams = new RecyclerView.LayoutParams(
+                    RecyclerView.LayoutParams.MATCH_PARENT,
+                    RecyclerView.LayoutParams.WRAP_CONTENT
+            );
+        }
 
-        String maSP = TextUtils.isEmpty(model.getMaSP()) ? "-" : model.getMaSP();
-        holder.tvTrangThai.setText(maSP);
-        holder.tvTrangThai.setTextColor(Color.parseColor("#1E3A8A"));
+        if (!shouldDisplay) {
+            holder.itemView.setVisibility(View.GONE);
+            layoutParams.height = 0;
+            holder.itemView.setLayoutParams(layoutParams);
+            holder.itemView.setOnClickListener(null);
+            return;
+        }
+
+        holder.itemView.setVisibility(View.VISIBLE);
+        layoutParams.height = RecyclerView.LayoutParams.WRAP_CONTENT;
+        holder.itemView.setLayoutParams(layoutParams);
+
+        holder.tvSoLo.setText(defaultText(soLo));
+        holder.tvHanSuDung.setText(formatDate(hanSuDung));
+        holder.tvMaHang.setText(defaultText(maHang));
+        holder.tvNgayNhap.setText(formatDate(ngayNhap));
+        holder.tvSoLuong.setText(String.format(Locale.getDefault(), "%,.0f", soLuong));
+        holder.tvSoNgayConLai.setText(soNgayConLai == Long.MIN_VALUE ? "-" : String.valueOf(soNgayConLai));
 
         holder.itemView.setOnClickListener(v -> {
-            String maNhapHang = model.getMaNhapHang();
-            if (!TextUtils.isEmpty(maNhapHang)) {
-                Intent intent = new Intent(v.getContext(), ChiTietNhapHangActivity.class);
-                intent.putExtra("NHAP_HANG_ID", maNhapHang);
-                v.getContext().startActivity(intent);
-            }
+            Intent intent = new Intent(v.getContext(), ChiTietLoHangActivity.class);
+            intent.putExtra(ChiTietLoHangActivity.EXTRA_SO_LO, soLo);
+            v.getContext().startActivity(intent);
         });
+    }
+
+    @Override
+    public void onDataChanged() {
+        super.onDataChanged();
+        notifyFilteredCount();
     }
 
     @NonNull
     @Override
     public LoHangViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_nhap_hang, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_lo_hang, parent, false);
         return new LoHangViewHolder(view);
     }
 
-    static class LoHangViewHolder extends RecyclerView.ViewHolder {
-        TextView tvMaDon;
+    private static String firstNonEmpty(DocumentSnapshot snapshot, String... keys) {
+        for (String key : keys) {
+            String value = snapshot.getString(key);
+            if (!TextUtils.isEmpty(value)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static double firstNumber(DocumentSnapshot snapshot, double fallback, String... keys) {
+        for (String key : keys) {
+            Number value = snapshot.getDouble(key);
+            if (value != null) {
+                return value.doubleValue();
+            }
+            Object raw = snapshot.get(key);
+            if (raw instanceof Number) {
+                return ((Number) raw).doubleValue();
+            }
+        }
+        return fallback;
+    }
+
+    private static Date firstDate(DocumentSnapshot snapshot, String... keys) {
+        for (String key : keys) {
+            Date value = toDate(snapshot.get(key));
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static Date toDate(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (raw instanceof Timestamp) {
+            return ((Timestamp) raw).toDate();
+        }
+        if (raw instanceof Date) {
+            return (Date) raw;
+        }
+        if (raw instanceof Number) {
+            long epochMillis = ((Number) raw).longValue();
+            return new Date(epochMillis);
+        }
+        if (raw instanceof String) {
+            String value = ((String) raw).trim();
+            if (TextUtils.isEmpty(value)) {
+                return null;
+            }
+            String[] patterns = new String[]{"dd/MM/yyyy", "yyyy-MM-dd", "dd-MM-yyyy"};
+            for (String pattern : patterns) {
+                try {
+                    return new SimpleDateFormat(pattern, Locale.getDefault()).parse(value);
+                } catch (ParseException ignored) {
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String formatDate(Date date) {
+        if (date == null) {
+            return "-";
+        }
+        return new SimpleDateFormat("dd/MM/yy", Locale.getDefault()).format(date);
+    }
+
+    private static long calcRemainingDays(Date ngayNhap, Date hanSuDung) {
+        if (ngayNhap == null || hanSuDung == null) {
+            return Long.MIN_VALUE;
+        }
+        // So ngay con lai theo du lieu Firebase: han su dung - ngay nhap.
+        long diffMillis = stripTime(hanSuDung).getTime() - stripTime(ngayNhap).getTime();
+        return diffMillis / (24L * 60L * 60L * 1000L);
+    }
+
+    private static Date stripTime(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    private static String defaultText(String value) {
+        return TextUtils.isEmpty(value) ? "-" : value;
+    }
+
+    private boolean matchesCurrentFilter(long soNgayConLai, double soLuong) {
+        switch (activeFilterType) {
+            case LoHangFilterType.EXPIRING_SOON:
+                // Quy uoc: date = hanSuDung - ngayNhap, sap het han khi 1..15 ngay.
+                return soNgayConLai > 0 && soNgayConLai <= 15;
+            case LoHangFilterType.EXPIRED:
+                // Theo yeu cau: date = 0 la het han.
+                return soNgayConLai == 0;
+            case LoHangFilterType.LOW_STOCK:
+                return soLuong <= 10;
+            case LoHangFilterType.ALL:
+            default:
+                return true;
+        }
+    }
+
+    private int countMatchingItems() {
+        int count = 0;
+        for (int i = 0; i < getItemCount(); i++) {
+            DocumentSnapshot snapshot = getSnapshots().getSnapshot(i);
+            LoHang model = getItem(i);
+            Date hanSuDung = firstDate(snapshot, "hanSuDung", "HanSuDung", "hansudung");
+            Date ngayNhap = firstDate(snapshot, "ngayNhap", "NgayNhap", "ngayTao", "createdAt");
+            double soLuong = firstNumber(snapshot, model.getSoLuong(), "soLuong", "SoLuong");
+            long soNgayConLai = calcRemainingDays(ngayNhap, hanSuDung);
+            if (matchesCurrentFilter(soNgayConLai, soLuong)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void notifyFilteredCount() {
+        if (countChangedListener == null) {
+            return;
+        }
+        countChangedListener.onChanged(countMatchingItems());
+    }
+
+    public static class LoHangViewHolder extends RecyclerView.ViewHolder {
+        TextView tvSoLo;
+        TextView tvHanSuDung;
+        TextView tvMaHang;
         TextView tvNgayNhap;
-        TextView tvTongTien;
-        TextView tvTrangThai;
+        TextView tvSoLuong;
+        TextView tvSoNgayConLai;
 
         public LoHangViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvMaDon = itemView.findViewById(R.id.tvMaDon);
+            tvSoLo = itemView.findViewById(R.id.tvSoLo);
+            tvHanSuDung = itemView.findViewById(R.id.tvHanSuDung);
+            tvMaHang = itemView.findViewById(R.id.tvMaHang);
             tvNgayNhap = itemView.findViewById(R.id.tvNgayNhap);
-            tvTongTien = itemView.findViewById(R.id.tvTongTien);
-            tvTrangThai = itemView.findViewById(R.id.tvTrangThai);
+            tvSoLuong = itemView.findViewById(R.id.tvSoLuong);
+            tvSoNgayConLai = itemView.findViewById(R.id.tvSoNgayConLai);
         }
     }
 }
-
