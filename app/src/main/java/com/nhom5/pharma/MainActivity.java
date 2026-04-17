@@ -40,7 +40,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         
         mAuth = FirebaseAuth.getInstance();
-        /* Tạm thời bỏ qua kiểm tra đăng nhập để debug giao diện sản phẩm trực tiếp
+        
+        // Tạm thời bỏ qua đăng nhập để vào thẳng Sản phẩm
+        /*
         if (mAuth.getCurrentUser() == null) {
             Intent intent = new Intent(this, DangNhapActivity.class);
             startActivity(intent);
@@ -78,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         tabSuppliers.setOnClickListener(v -> selectTab(TAB_SUPPLIERS));
         tabManage.setOnClickListener(v -> selectTab(TAB_MANAGE));
 
-        // Mặc định chạy thẳng vào tab Sản phẩm
+        // Vào thẳng tab Sản phẩm
         selectTab(TAB_PRODUCTS);
     }
 

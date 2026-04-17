@@ -66,7 +66,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {
         TextView tvMaHang, tvTenHang, tvGiaVon, tvThoiGian;
-        TextView tvDetailTen, tvDetailMaHang, tvDetailMoTa, tvDetailGiaVon, tvDetailHangSX, tvDetailNuocSX;
+        TextView tvDetailTen, tvDetailMaHang, tvDetailMoTa;
         View layoutDetail, btnDelete, btnEdit, lineMaHang;
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
 
@@ -80,10 +80,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             layoutDetail = itemView.findViewById(R.id.layout_detail);
             tvDetailTen = itemView.findViewById(R.id.tv_detail_ten);
             tvDetailMaHang = itemView.findViewById(R.id.tv_detail_ma_hang);
-            tvDetailHangSX = itemView.findViewById(R.id.tv_detail_hang_sx);
-            tvDetailNuocSX = itemView.findViewById(R.id.tv_detail_nuoc_sx);
             tvDetailMoTa = itemView.findViewById(R.id.tv_detail_mo_ta);
-            tvDetailGiaVon = itemView.findViewById(R.id.tv_detail_gia_von);
             btnDelete = itemView.findViewById(R.id.btn_delete);
             btnEdit = itemView.findViewById(R.id.btn_edit);
         }
@@ -99,20 +96,28 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
                 tvThoiGian.setText("---");
             }
 
-            int color = isExpanded ? Color.parseColor("#2196f3") : Color.BLACK;
+            int blueColor = Color.parseColor("#2196f3");
+            int blackColor = Color.BLACK;
+
+            // Đổi màu dựa trên việc có đang xem chi tiết (isExpanded) hay không
+            int color = isExpanded ? blueColor : blackColor;
+
             tvMaHang.setTextColor(color);
             tvTenHang.setTextColor(color);
             tvGiaVon.setTextColor(color);
-            if (lineMaHang != null) lineMaHang.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+            tvThoiGian.setTextColor(color);
+
+            // Gạch chân màu xanh dưới mã hàng khi xem chi tiết
+            if (lineMaHang != null) {
+                lineMaHang.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+            }
+
             layoutDetail.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
 
             if (isExpanded) {
                 tvDetailTen.setText(product.getTenSP());
                 tvDetailMaHang.setText(product.getId());
-                tvDetailHangSX.setText(product.getHangSX() != null ? product.getHangSX() : "---");
-                tvDetailNuocSX.setText(product.getNuocSX() != null ? product.getNuocSX() : "---");
                 tvDetailMoTa.setText(product.getMoTa() != null ? product.getMoTa() : "Chưa có mô tả");
-                tvDetailGiaVon.setText(String.format(Locale.getDefault(), "%,.0f", product.getGiavon()));
             }
         }
     }
