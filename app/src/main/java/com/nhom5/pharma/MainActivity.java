@@ -40,13 +40,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         
         mAuth = FirebaseAuth.getInstance();
-        // Kiểm tra đăng nhập
+        /* Tạm thời bỏ qua kiểm tra đăng nhập để debug giao diện sản phẩm trực tiếp
         if (mAuth.getCurrentUser() == null) {
             Intent intent = new Intent(this, DangNhapActivity.class);
             startActivity(intent);
             finish();
             return;
         }
+        */
 
         setContentView(R.layout.activity_main);
 
@@ -77,12 +78,17 @@ public class MainActivity extends AppCompatActivity {
         tabSuppliers.setOnClickListener(v -> selectTab(TAB_SUPPLIERS));
         tabManage.setOnClickListener(v -> selectTab(TAB_MANAGE));
 
+<<<<<<< HEAD
         // Kiểm tra nếu được gọi để chọn sản phẩm
         if (getIntent().getBooleanExtra("SELECT_MODE", false)) {
             selectTab(TAB_PRODUCTS);
         } else {
             selectTab(TAB_ORDERS);
         }
+=======
+        // Mặc định chạy thẳng vào tab Sản phẩm
+        selectTab(TAB_PRODUCTS);
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
     }
 
     private void selectTab(int index) {

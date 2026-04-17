@@ -2,6 +2,7 @@ package com.nhom5.pharma.feature.sanpham;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.IgnoreExtraProperties;
+import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.ServerTimestamp;
 import java.util.Date;
 import java.util.Locale;
@@ -10,17 +11,23 @@ import java.util.regex.Pattern;
 
 @IgnoreExtraProperties
 public class Product {
+<<<<<<< HEAD
     private static final Pattern PRODUCT_ID_PATTERN = Pattern.compile("^SP(\\d+)$");
     private static final String LEGACY_BAD_PRODUCT_ID = "SP00001";
 
     private String id; // Document ID (SP0001, ...)
+=======
+    private String id; 
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
     private String tenSP;
     private double giavon;
     private String maVach;
     private String moTa;
     private String hangSX;
     private String nuocSX;
-    private boolean trangThai;
+    
+    @PropertyName("trangThai")
+    private Object trangThai; 
     
     @ServerTimestamp
     private Date ngayTao;
@@ -28,12 +35,11 @@ public class Product {
     @ServerTimestamp
     private Date ngayCapNhat;
 
-    public Product() {
-        // Required for Firestore
-    }
+    public Product() {}
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+<<<<<<< HEAD
 
     public String getDisplayId() {
         return id;
@@ -95,30 +101,36 @@ public class Product {
         return String.format(Locale.getDefault(), "SP%0" + maxDigits + "d", maxNumber + 1);
     }
 
+=======
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
     public String getTenSP() { return tenSP; }
     public void setTenSP(String tenSP) { this.tenSP = tenSP; }
-
     public double getGiavon() { return giavon; }
     public void setGiavon(double giavon) { this.giavon = giavon; }
-
     public String getMaVach() { return maVach; }
     public void setMaVach(String maVach) { this.maVach = maVach; }
-
     public String getMoTa() { return moTa; }
     public void setMoTa(String moTa) { this.moTa = moTa; }
-
     public String getHangSX() { return hangSX; }
     public void setHangSX(String hangSX) { this.hangSX = hangSX; }
-
     public String getNuocSX() { return nuocSX; }
     public void setNuocSX(String nuocSX) { this.nuocSX = nuocSX; }
 
-    public boolean isTrangThai() { return trangThai; }
-    public void setTrangThai(boolean trangThai) { this.trangThai = trangThai; }
+    @PropertyName("trangThai")
+    public Object getTrangThai() { return trangThai; }
+
+    @PropertyName("trangThai")
+    public void setTrangThai(Object trangThai) { this.trangThai = trangThai; }
+
+    // Đổi tên để không trùng lặp với getter của Firestore
+    public boolean layTrangThaiBoolean() {
+        if (trangThai instanceof Boolean) return (Boolean) trangThai;
+        if (trangThai instanceof Number) return ((Number) trangThai).intValue() != 0;
+        return true; 
+    }
 
     public Date getNgayTao() { return ngayTao; }
     public void setNgayTao(Date ngayTao) { this.ngayTao = ngayTao; }
-
     public Date getNgayCapNhat() { return ngayCapNhat; }
     public void setNgayCapNhat(Date ngayCapNhat) { this.ngayCapNhat = ngayCapNhat; }
 }

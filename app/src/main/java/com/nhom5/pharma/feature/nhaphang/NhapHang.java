@@ -9,10 +9,16 @@ import java.util.Map;
 @IgnoreExtraProperties
 public class NhapHang {
     private String id;
+<<<<<<< HEAD
     private String maID;
     private String maNhaCungCap;
     private String maNguoiNhap;
     private String tenNhaCungCap;
+=======
+    private String maNCC;
+    private String maNguoiNhap;
+    private Object trangThai; // Đổi sang Object để tránh lỗi Long vs Boolean từ Firestore
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
     private double tongTien;
     private Object trangThai; // Hỗ trợ int / boolean / String từ dữ liệu Firestore cũ và mới
     private Date ngayNhap;
@@ -34,8 +40,17 @@ public class NhapHang {
     public String getMaNguoiNhap() { return maNguoiNhap; }
     public void setMaNguoiNhap(String maNguoiNhap) { this.maNguoiNhap = maNguoiNhap; }
 
+<<<<<<< HEAD
     public String getTenNhaCungCap() { return tenNhaCungCap; }
     public void setTenNhaCungCap(String tenNhaCungCap) { this.tenNhaCungCap = tenNhaCungCap; }
+=======
+    public boolean isTrangThai() {
+        if (trangThai instanceof Boolean) return (Boolean) trangThai;
+        if (trangThai instanceof Number) return ((Number) trangThai).intValue() != 0;
+        return false;
+    }
+    public void setTrangThai(Object trangThai) { this.trangThai = trangThai; }
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
 
     public double getTongTien() { return tongTien; }
     public void setTongTien(double tongTien) { this.tongTien = tongTien; }

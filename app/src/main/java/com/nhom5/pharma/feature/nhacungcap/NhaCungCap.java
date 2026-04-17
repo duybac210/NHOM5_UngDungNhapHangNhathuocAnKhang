@@ -1,27 +1,37 @@
 package com.nhom5.pharma.feature.nhacungcap;
 
-import com.google.firebase.firestore.DocumentId;
+import com.google.firebase.firestore.IgnoreExtraProperties;
 import java.io.Serializable;
 
+@IgnoreExtraProperties
 public class NhaCungCap implements Serializable {
-    @DocumentId
-    private String id; // Mã NCC từ Document ID
-    
+    private String id;
     private String tenNCC;
+<<<<<<< HEAD
     private String tenNhaCungCap;
     private String maSoThue;
+=======
+    private String diaChi;
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
     private String sdt;
     private String phone;
     private String email;
+<<<<<<< HEAD
     private String diaChi;
     private String address;
     private boolean trangThai;
     private String TongDon; // Khớp với field 'TongDon' trên Firestore
     private String GiaTri;  // Khớp với field 'GiaTri' trên Firestore
+=======
+    private String maSoThue;
+    private String tongDon;
+    private String giaTri;
+    private Object trangThai; 
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
 
-    public NhaCungCap() {}
+    public NhaCungCap() {
+    }
 
-    // Getters và Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -33,11 +43,16 @@ public class NhaCungCap implements Serializable {
     }
     public void setTenNCC(String tenNCC) { this.tenNCC = tenNCC; }
 
+<<<<<<< HEAD
     public String getTenNhaCungCap() { return tenNhaCungCap; }
     public void setTenNhaCungCap(String tenNhaCungCap) { this.tenNhaCungCap = tenNhaCungCap; }
 
     public String getMaSoThue() { return maSoThue; }
     public void setMaSoThue(String maSoThue) { this.maSoThue = maSoThue; }
+=======
+    public String getDiaChi() { return diaChi; }
+    public void setDiaChi(String diaChi) { this.diaChi = diaChi; }
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
 
     public String getSdt() {
         if (sdt != null && !sdt.trim().isEmpty()) {
@@ -53,6 +68,7 @@ public class NhaCungCap implements Serializable {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
+<<<<<<< HEAD
     public String getDiaChi() {
         if (diaChi != null && !diaChi.trim().isEmpty()) {
             return diaChi;
@@ -66,10 +82,21 @@ public class NhaCungCap implements Serializable {
 
     public boolean isTrangThai() { return trangThai; }
     public void setTrangThai(boolean trangThai) { this.trangThai = trangThai; }
+=======
+    public String getMaSoThue() { return maSoThue; }
+    public void setMaSoThue(String maSoThue) { this.maSoThue = maSoThue; }
 
-    public String getTongDon() { return TongDon; }
-    public void setTongDon(String tongDon) { TongDon = tongDon; }
+    public String getTongDon() { return tongDon; }
+    public void setTongDon(String tongDon) { this.tongDon = tongDon; }
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
 
-    public String getGiaTri() { return GiaTri; }
-    public void setGiaTri(String giaTri) { GiaTri = giaTri; }
+    public String getGiaTri() { return giaTri; }
+    public void setGiaTri(String giaTri) { this.giaTri = giaTri; }
+
+    public boolean isTrangThai() { 
+        if (trangThai instanceof Boolean) return (Boolean) trangThai;
+        if (trangThai instanceof Number) return ((Number) trangThai).intValue() != 0;
+        return true; 
+    }
+    public void setTrangThai(Object trangThai) { this.trangThai = trangThai; }
 }

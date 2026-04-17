@@ -46,18 +46,25 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         RecyclerView rvProducts = view.findViewById(R.id.rv_products);
         rvProducts.setLayoutManager(new LinearLayoutManager(getContext()));
         
+<<<<<<< HEAD
         adapter = new ProductAdapter(this, isSelectMode);
+=======
+        // Sử dụng Adapter chuẩn (nhẹ hơn FirestoreRecyclerAdapter)
+        adapter = new ProductAdapter(this);
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
         rvProducts.setAdapter(adapter);
 
         viewModel = new ViewModelProvider(this).get(ProductViewModel.class);
+        
+        // Lắng nghe dữ liệu thời gian thực từ ViewModel
         viewModel.getProducts().observe(getViewLifecycleOwner(), products -> {
-            fullList = products;
-            adapter.setProductList(products);
+            if (products != null) {
+                fullList = products;
+                adapter.setProductList(products);
+            }
         });
 
-        viewModel.listenToProducts();
-
-        // Nút thêm sản phẩm
+        // Nút thêm sản phẩm (+) ở góc trên bên phải
         View btnAdd = view.findViewById(R.id.iv_add);
         if (btnAdd != null) {
             btnAdd.setOnClickListener(v -> {
@@ -66,12 +73,13 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
             });
         }
 
+        // Thanh tìm kiếm
         EditText etSearch = view.findViewById(R.id.et_search);
         if (etSearch != null) {
             etSearch.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    filterProducts(s.toString());
+                    filterLocal(s.toString());
                 }
                 @Override public void afterTextChanged(Editable s) {}
             });
@@ -80,6 +88,7 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         return view;
     }
 
+<<<<<<< HEAD
     @Override
     public void onItemClick(Product product) {
         if (!isSelectMode || getActivity() == null) {
@@ -95,6 +104,9 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
     }
 
     private void filterProducts(String query) {
+=======
+    private void filterLocal(String query) {
+>>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
         if (query.isEmpty()) {
             adapter.setProductList(fullList);
         } else {
@@ -118,27 +130,28 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
 
     @Override
     public void onDeleteClick(Product product) {
-        new AlertDialog.Builder(getContext())
-                .setTitle("Xóa sản phẩm")
-                .setMessage("Bạn có chắc chắn muốn xóa?")
-                .setPositiveButton("Đồng ý", (dialog, which) -> {
-                    viewModel.deleteProduct(product.getId());
-                    Toast.makeText(getContext(), "Đã xóa sản phẩm", Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton("Bỏ qua", null)
-                .show();
+        showDeleteConfirmDialog(product);
+    }
+
+    private void showDeleteConfirmDialog(Product product) {
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_confirm_delete_product, null);
+        AlertDialog dialog = new AlertDialog.Builder(getContext()).setView(dialogView).create();
+        if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        dialogView.findViewById(R.id.iv_close_dialog).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.tv_skip).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btn_confirm_yes).setOnClickListener(v -> {
+            viewModel.deleteProduct(product.getId());
+            dialog.dismiss();
+            Toast.makeText(getContext(), "Đã xóa sản phẩm", Toast.LENGTH_SHORT).show();
+        });
+        dialog.show();
     }
 
     private void showEditDialog(Product product) {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_edit_product, null);
-        
-        AlertDialog dialog = new AlertDialog.Builder(getContext())
-                .setView(dialogView)
-                .create();
-        
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
+        AlertDialog dialog = new AlertDialog.Builder(getContext()).setView(dialogView).create();
+        if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         EditText etMaHang = dialogView.findViewById(R.id.et_ma_hang);
         EditText etMaVach = dialogView.findViewById(R.id.et_ma_vach);
@@ -154,12 +167,14 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
             etGiaVon.setText(String.format(Locale.getDefault(), "%.0f", product.getGiavon()));
             etHangSX.setText(product.getHangSX());
             etNuocSX.setText(product.getNuocSX());
+            etMaHang.setEnabled(false);
         } else {
-            etMaHang.setHint("Tự động");
+            etMaHang.setText("Tự động tạo");
+            etMaHang.setEnabled(false);
         }
 
         dialogView.findViewById(R.id.btn_save).setOnClickListener(v -> {
-            String tenHang = etTenHang.getText().toString();
+            String tenHang = etTenHang.getText().toString().trim();
             if (tenHang.isEmpty()) {
                 etTenHang.setError("Vui lòng nhập tên");
                 return;
@@ -167,7 +182,8 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
 
             double giaVon = 0;
             try {
-                giaVon = Double.parseDouble(etGiaVon.getText().toString());
+                String s = etGiaVon.getText().toString();
+                if (!s.isEmpty()) giaVon = Double.parseDouble(s);
             } catch (Exception ignored) {}
 
             Product p = product != null ? product : new Product();
@@ -180,12 +196,11 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
 
             viewModel.saveProduct(p);
             dialog.dismiss();
-            Toast.makeText(getContext(), "Đã lưu vào Firestore", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Đang lưu...", Toast.LENGTH_SHORT).show();
         });
 
         dialogView.findViewById(R.id.btn_cancel).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.iv_close).setOnClickListener(v -> dialog.dismiss());
-
         dialog.show();
     }
 }
