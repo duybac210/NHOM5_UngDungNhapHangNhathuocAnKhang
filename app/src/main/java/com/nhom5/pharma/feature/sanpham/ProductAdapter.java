@@ -1,5 +1,6 @@
 package com.nhom5.pharma.feature.sanpham;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,11 +50,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
         holder.itemView.setOnClickListener(v -> {
             int previousExpanded = expandedPosition;
-            if (expandedPosition == position) {
-                expandedPosition = -1;
-            } else {
-                expandedPosition = position;
-            }
+            expandedPosition = (expandedPosition == holder.getBindingAdapterPosition()) ? -1 : holder.getBindingAdapterPosition();
             notifyItemChanged(previousExpanded);
             notifyItemChanged(expandedPosition);
         });
@@ -69,9 +66,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {
         TextView tvMaHang, tvTenHang, tvGiaVon, tvThoiGian;
-        TextView tvDetailTen, tvDetailMaHang, tvDetailMoTa, tvDetailGiaVon;
-        View layoutDetail, btnDelete, btnEdit;
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        TextView tvDetailTen, tvDetailMaHang, tvDetailMoTa, tvDetailGiaVon, tvDetailHangSX, tvDetailNuocSX;
+        View layoutDetail, btnDelete, btnEdit, lineMaHang;
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
 
         public ProductViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -79,33 +76,43 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             tvTenHang = itemView.findViewById(R.id.tv_ten_hang);
             tvGiaVon = itemView.findViewById(R.id.tv_gia_von);
             tvThoiGian = itemView.findViewById(R.id.tv_thoi_gian);
-            
+            lineMaHang = itemView.findViewById(R.id.line_ma_hang);
             layoutDetail = itemView.findViewById(R.id.layout_detail);
             tvDetailTen = itemView.findViewById(R.id.tv_detail_ten);
             tvDetailMaHang = itemView.findViewById(R.id.tv_detail_ma_hang);
-            tvDetailMoTa = itemView.findViewById(R.id.tv_detail_ma_vach); // Reuse ID for Mo Ta
+            tvDetailHangSX = itemView.findViewById(R.id.tv_detail_hang_sx);
+            tvDetailNuocSX = itemView.findViewById(R.id.tv_detail_nuoc_sx);
+            tvDetailMoTa = itemView.findViewById(R.id.tv_detail_mo_ta);
             tvDetailGiaVon = itemView.findViewById(R.id.tv_detail_gia_von);
-            
             btnDelete = itemView.findViewById(R.id.btn_delete);
             btnEdit = itemView.findViewById(R.id.btn_edit);
         }
 
         void bind(Product product, boolean isExpanded) {
-            tvMaHang.setText(product.getId()); // Document ID is Ma Hang
+            tvMaHang.setText(product.getId());
             tvTenHang.setText(product.getTenSP());
-            tvGiaVon.setText(String.format(Locale.getDefault(), "%,.0fđ", product.getGiavon()));
+            tvGiaVon.setText(String.format(Locale.getDefault(), "%,.0f", product.getGiavon()));
+            
             if (product.getNgayTao() != null) {
                 tvThoiGian.setText(sdf.format(product.getNgayTao()));
             } else {
-                tvThoiGian.setText("");
+                tvThoiGian.setText("---");
             }
 
+            int color = isExpanded ? Color.parseColor("#2196f3") : Color.BLACK;
+            tvMaHang.setTextColor(color);
+            tvTenHang.setTextColor(color);
+            tvGiaVon.setTextColor(color);
+            if (lineMaHang != null) lineMaHang.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
             layoutDetail.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+
             if (isExpanded) {
                 tvDetailTen.setText(product.getTenSP());
                 tvDetailMaHang.setText(product.getId());
-                tvDetailMoTa.setText(product.getMoTa() != null ? product.getMoTa() : "Chưa có");
-                tvDetailGiaVon.setText(String.format(Locale.getDefault(), "%,.0fđ", product.getGiavon()));
+                tvDetailHangSX.setText(product.getHangSX() != null ? product.getHangSX() : "---");
+                tvDetailNuocSX.setText(product.getNuocSX() != null ? product.getNuocSX() : "---");
+                tvDetailMoTa.setText(product.getMoTa() != null ? product.getMoTa() : "Chưa có mô tả");
+                tvDetailGiaVon.setText(String.format(Locale.getDefault(), "%,.0f", product.getGiavon()));
             }
         }
     }

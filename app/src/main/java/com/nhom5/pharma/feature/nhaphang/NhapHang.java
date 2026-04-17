@@ -8,8 +8,8 @@ import java.util.Date;
 public class NhapHang {
     private String id;
     private String maNCC;
-    private String maNguoiNhap; // Thêm trường này
-    private boolean trangThai;
+    private String maNguoiNhap;
+    private Object trangThai; // Đổi sang Object để tránh lỗi Long vs Boolean từ Firestore
     private double tongTien;
     private String ghiChu;
     
@@ -29,8 +29,12 @@ public class NhapHang {
     public String getMaNguoiNhap() { return maNguoiNhap; }
     public void setMaNguoiNhap(String maNguoiNhap) { this.maNguoiNhap = maNguoiNhap; }
 
-    public boolean isTrangThai() { return trangThai; }
-    public void setTrangThai(boolean trangThai) { this.trangThai = trangThai; }
+    public boolean isTrangThai() {
+        if (trangThai instanceof Boolean) return (Boolean) trangThai;
+        if (trangThai instanceof Number) return ((Number) trangThai).intValue() != 0;
+        return false;
+    }
+    public void setTrangThai(Object trangThai) { this.trangThai = trangThai; }
 
     public double getTongTien() { return tongTien; }
     public void setTongTien(double tongTien) { this.tongTien = tongTien; }

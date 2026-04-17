@@ -1,32 +1,31 @@
 package com.nhom5.pharma.feature.nhacungcap;
 
-import com.google.firebase.firestore.DocumentId;
+import com.google.firebase.firestore.IgnoreExtraProperties;
 import java.io.Serializable;
 
+@IgnoreExtraProperties
 public class NhaCungCap implements Serializable {
-    @DocumentId
-    private String id; // Mã NCC từ Document ID
-    
+    private String id;
     private String tenNCC;
-    private String maSoThue;
+    private String diaChi;
     private String sdt;
     private String email;
-    private String diaChi;
-    private boolean trangThai;
-    private String TongDon; // Khớp với field 'TongDon' trên Firestore
-    private String GiaTri;  // Khớp với field 'GiaTri' trên Firestore
+    private String maSoThue;
+    private String tongDon;
+    private String giaTri;
+    private Object trangThai; 
 
-    public NhaCungCap() {}
+    public NhaCungCap() {
+    }
 
-    // Getters và Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
     public String getTenNCC() { return tenNCC; }
     public void setTenNCC(String tenNCC) { this.tenNCC = tenNCC; }
 
-    public String getMaSoThue() { return maSoThue; }
-    public void setMaSoThue(String maSoThue) { this.maSoThue = maSoThue; }
+    public String getDiaChi() { return diaChi; }
+    public void setDiaChi(String diaChi) { this.diaChi = diaChi; }
 
     public String getSdt() { return sdt; }
     public void setSdt(String sdt) { this.sdt = sdt; }
@@ -34,15 +33,19 @@ public class NhaCungCap implements Serializable {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getDiaChi() { return diaChi; }
-    public void setDiaChi(String diaChi) { this.diaChi = diaChi; }
+    public String getMaSoThue() { return maSoThue; }
+    public void setMaSoThue(String maSoThue) { this.maSoThue = maSoThue; }
 
-    public boolean isTrangThai() { return trangThai; }
-    public void setTrangThai(boolean trangThai) { this.trangThai = trangThai; }
+    public String getTongDon() { return tongDon; }
+    public void setTongDon(String tongDon) { this.tongDon = tongDon; }
 
-    public String getTongDon() { return TongDon; }
-    public void setTongDon(String tongDon) { TongDon = tongDon; }
+    public String getGiaTri() { return giaTri; }
+    public void setGiaTri(String giaTri) { this.giaTri = giaTri; }
 
-    public String getGiaTri() { return GiaTri; }
-    public void setGiaTri(String giaTri) { GiaTri = giaTri; }
+    public boolean isTrangThai() { 
+        if (trangThai instanceof Boolean) return (Boolean) trangThai;
+        if (trangThai instanceof Number) return ((Number) trangThai).intValue() != 0;
+        return true; 
+    }
+    public void setTrangThai(Object trangThai) { this.trangThai = trangThai; }
 }

@@ -40,13 +40,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         
         mAuth = FirebaseAuth.getInstance();
-        // Kiểm tra đăng nhập
+        /* Tạm thời bỏ qua kiểm tra đăng nhập để debug giao diện sản phẩm trực tiếp
         if (mAuth.getCurrentUser() == null) {
             Intent intent = new Intent(this, DangNhapActivity.class);
             startActivity(intent);
             finish();
             return;
         }
+        */
 
         setContentView(R.layout.activity_main);
 
@@ -77,7 +78,8 @@ public class MainActivity extends AppCompatActivity {
         tabSuppliers.setOnClickListener(v -> selectTab(TAB_SUPPLIERS));
         tabManage.setOnClickListener(v -> selectTab(TAB_MANAGE));
 
-        selectTab(TAB_ORDERS);
+        // Mặc định chạy thẳng vào tab Sản phẩm
+        selectTab(TAB_PRODUCTS);
     }
 
     private void selectTab(int index) {
