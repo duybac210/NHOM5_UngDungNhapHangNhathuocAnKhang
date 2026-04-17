@@ -86,7 +86,6 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
         holder.tvMaHang.setText(defaultText(maHang));
         holder.tvNgayNhap.setText(formatDate(ngayNhap));
         holder.tvSoLuong.setText(String.format(Locale.getDefault(), "%,.0f", soLuong));
-        holder.tvSoNgayConLai.setText(soNgayConLai == Long.MIN_VALUE ? "-" : String.valueOf(soNgayConLai));
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ChiTietLoHangActivity.class);
@@ -247,7 +246,6 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
         TextView tvMaHang;
         TextView tvNgayNhap;
         TextView tvSoLuong;
-        TextView tvSoNgayConLai;
 
         public LoHangViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -256,7 +254,6 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
             tvMaHang = itemView.findViewById(R.id.tvMaHang);
             tvNgayNhap = itemView.findViewById(R.id.tvNgayNhap);
             tvSoLuong = itemView.findViewById(R.id.tvSoLuong);
-            tvSoNgayConLai = itemView.findViewById(R.id.tvSoNgayConLai);
         }
     }
 }
