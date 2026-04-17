@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -47,16 +48,18 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         rvProducts.setLayoutManager(new LinearLayoutManager(getContext()));
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         adapter = new ProductAdapter(this, isSelectMode);
 =======
         // Sử dụng Adapter chuẩn (nhẹ hơn FirestoreRecyclerAdapter)
+=======
+>>>>>>> d1df932 (Hoàn thiện giao diện sản phẩm: đồng bộ header, màu sắc xanh khi mở rộng, fix crash)
         adapter = new ProductAdapter(this);
 >>>>>>> c80b2bd (Lưu code giao diện san pham mượt và fix crash)
         rvProducts.setAdapter(adapter);
 
         viewModel = new ViewModelProvider(this).get(ProductViewModel.class);
         
-        // Lắng nghe dữ liệu thời gian thực từ ViewModel
         viewModel.getProducts().observe(getViewLifecycleOwner(), products -> {
             if (products != null) {
                 fullList = products;
@@ -64,6 +67,7 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
             }
         });
 
+<<<<<<< HEAD
         // Nút thêm sản phẩm (+) ở góc trên bên phải
         View btnAdd = view.findViewById(R.id.iv_add);
         if (btnAdd != null) {
@@ -71,12 +75,25 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
                 Intent intent = new Intent(getContext(), TaoSanPhamActivity.class);
                 startActivity(intent);
             });
+=======
+        // Cập nhật tiêu đề từ layout chung
+        TextView tvTitle = view.findViewById(R.id.tvTitle);
+        if (tvTitle != null) {
+            tvTitle.setText("Quản lý sản phẩm");
+        }
+
+        // Nút thêm sản phẩm (+)
+        View btnAddNew = view.findViewById(R.id.btnAddNew);
+        if (btnAddNew != null) {
+            btnAddNew.setOnClickListener(v -> showEditDialog(null));
+>>>>>>> d1df932 (Hoàn thiện giao diện sản phẩm: đồng bộ header, màu sắc xanh khi mở rộng, fix crash)
         }
 
         // Thanh tìm kiếm
-        EditText etSearch = view.findViewById(R.id.et_search);
-        if (etSearch != null) {
-            etSearch.addTextChangedListener(new TextWatcher() {
+        EditText searchEditText = view.findViewById(R.id.searchEditText);
+        if (searchEditText != null) {
+            searchEditText.setHint("Tìm kiếm sản phẩm...");
+            searchEditText.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                     filterLocal(s.toString());
@@ -112,10 +129,16 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         } else {
             List<Product> filtered = new ArrayList<>();
             for (Product p : fullList) {
+<<<<<<< HEAD
                 String normalizedId = p.getDisplayId();
                 if ((p.getTenSP() != null && p.getTenSP().toLowerCase().contains(query.toLowerCase())) ||
                     (p.getId() != null && p.getId().toLowerCase().contains(query.toLowerCase())) ||
                     (normalizedId != null && normalizedId.toLowerCase().contains(query.toLowerCase()))) {
+=======
+                String q = query.toLowerCase();
+                if ((p.getTenSP() != null && p.getTenSP().toLowerCase().contains(q)) || 
+                    (p.getId() != null && p.getId().toLowerCase().contains(q))) {
+>>>>>>> d1df932 (Hoàn thiện giao diện sản phẩm: đồng bộ header, màu sắc xanh khi mở rộng, fix crash)
                     filtered.add(p);
                 }
             }
@@ -123,15 +146,8 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         }
     }
 
-    @Override
-    public void onEditClick(Product product) {
-        showEditDialog(product);
-    }
-
-    @Override
-    public void onDeleteClick(Product product) {
-        showDeleteConfirmDialog(product);
-    }
+    @Override public void onEditClick(Product product) { showEditDialog(product); }
+    @Override public void onDeleteClick(Product product) { showDeleteConfirmDialog(product); }
 
     private void showDeleteConfirmDialog(Product product) {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_confirm_delete_product, null);
@@ -153,25 +169,35 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         AlertDialog dialog = new AlertDialog.Builder(getContext()).setView(dialogView).create();
         if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
+        TextView tvDialogTitle = dialogView.findViewById(R.id.tv_dialog_title);
         EditText etMaHang = dialogView.findViewById(R.id.et_ma_hang);
         EditText etMaVach = dialogView.findViewById(R.id.et_ma_vach);
         EditText etTenHang = dialogView.findViewById(R.id.et_ten_hang);
         EditText etGiaVon = dialogView.findViewById(R.id.et_gia_von);
         EditText etHangSX = dialogView.findViewById(R.id.et_hang_sx);
         EditText etNuocSX = dialogView.findViewById(R.id.et_nuoc_sx);
+        View ivClose = dialogView.findViewById(R.id.iv_close);
 
         if (product != null) {
+<<<<<<< HEAD
             etMaHang.setText(product.getDisplayId());
+=======
+            tvDialogTitle.setText("Sửa hàng hóa");
+            etMaHang.setText(product.getId());
+>>>>>>> d1df932 (Hoàn thiện giao diện sản phẩm: đồng bộ header, màu sắc xanh khi mở rộng, fix crash)
             etMaVach.setText(product.getMaVach());
             etTenHang.setText(product.getTenSP());
             etGiaVon.setText(String.format(Locale.getDefault(), "%.0f", product.getGiavon()));
             etHangSX.setText(product.getHangSX());
             etNuocSX.setText(product.getNuocSX());
-            etMaHang.setEnabled(false);
         } else {
-            etMaHang.setText("Tự động tạo");
-            etMaHang.setEnabled(false);
+            tvDialogTitle.setText("Thêm hàng hóa");
+            etMaHang.setHint("Tự động tạo");
         }
+
+        // Nút X và nút Bỏ qua để thoát dialog
+        if (ivClose != null) ivClose.setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btn_cancel).setOnClickListener(v -> dialog.dismiss());
 
         dialogView.findViewById(R.id.btn_save).setOnClickListener(v -> {
             String tenHang = etTenHang.getText().toString().trim();
@@ -180,27 +206,22 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
                 return;
             }
 
-            double giaVon = 0;
-            try {
-                String s = etGiaVon.getText().toString();
-                if (!s.isEmpty()) giaVon = Double.parseDouble(s);
-            } catch (Exception ignored) {}
-
             Product p = product != null ? product : new Product();
             p.setTenSP(tenHang);
-            p.setGiavon(giaVon);
             p.setMaVach(etMaVach.getText().toString());
             p.setHangSX(etHangSX.getText().toString());
             p.setNuocSX(etNuocSX.getText().toString());
             p.setTrangThai(true);
+            try {
+                String gv = etGiaVon.getText().toString();
+                if (!gv.isEmpty()) p.setGiavon(Double.parseDouble(gv));
+            } catch (Exception ignored) {}
 
             viewModel.saveProduct(p);
             dialog.dismiss();
-            Toast.makeText(getContext(), "Đang lưu...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Đã lưu thành công", Toast.LENGTH_SHORT).show();
         });
 
-        dialogView.findViewById(R.id.btn_cancel).setOnClickListener(v -> dialog.dismiss());
-        dialogView.findViewById(R.id.iv_close).setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 }
