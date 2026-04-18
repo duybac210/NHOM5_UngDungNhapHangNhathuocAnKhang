@@ -31,7 +31,8 @@ public class NhaCungCapFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_nha_cung_cap, container, false);
         
         rvNhaCungCap = view.findViewById(R.id.rvNhaCungCap);
-        edtSearch = view.findViewById(R.id.edtSearch);
+        // ID đúng trong layout_common_search_bar là searchEditText
+        edtSearch = view.findViewById(R.id.searchEditText);
         repository = NhaCungCapRepository.getInstance();
 
         setupRecyclerView();
@@ -63,6 +64,8 @@ public class NhaCungCapFragment extends Fragment {
     }
 
     private void setupSearch() {
+        if (edtSearch == null) return;
+        
         edtSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -74,9 +77,11 @@ public class NhaCungCapFragment extends Fragment {
                 if (searchText.isEmpty()) {
                     newQuery = repository.getAllNhaCungCap();
                 } else {
+                    // Tìm kiếm theo Document ID (Mã NCC)
                     newQuery = repository.getAllNhaCungCap()
-                            .whereGreaterThanOrEqualTo("maNCC", searchText)
-                            .whereLessThanOrEqualTo("maNCC", searchText + "\uf8ff");
+                            .orderBy("__name__") // Tìm theo Document ID
+                            .startAt(searchText)
+                            .endAt(searchText + "\uf8ff");
                 }
                 
                 FirestoreRecyclerOptions<NhaCungCap> newOptions = new FirestoreRecyclerOptions.Builder<NhaCungCap>()
