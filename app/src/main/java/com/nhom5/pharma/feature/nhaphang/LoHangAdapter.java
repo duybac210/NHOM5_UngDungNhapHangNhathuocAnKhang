@@ -17,6 +17,7 @@ import com.google.firebase.Timestamp;
 import com.nhom5.pharma.R;
 import com.nhom5.pharma.feature.lohang.ChiTietLoHangActivity;
 import com.nhom5.pharma.feature.lohang.LoHangFilterType;
+import com.nhom5.pharma.util.FirestoreValueParser;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -120,13 +121,9 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
 
     private static double firstNumber(DocumentSnapshot snapshot, double fallback, String... keys) {
         for (String key : keys) {
-            Number value = snapshot.getDouble(key);
+            Double value = FirestoreValueParser.safeDouble(FirestoreValueParser.safeRaw(snapshot, key));
             if (value != null) {
-                return value.doubleValue();
-            }
-            Object raw = snapshot.get(key);
-            if (raw instanceof Number) {
-                return ((Number) raw).doubleValue();
+                return value;
             }
         }
         return fallback;

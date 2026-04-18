@@ -38,18 +38,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
         mAuth = FirebaseAuth.getInstance();
-        
-        // Tạm thời bỏ qua đăng nhập để vào thẳng Sản phẩm
-        /*
-        if (mAuth.getCurrentUser() == null) {
+        // TODO: Bỏ comment lại khi phát triển xong
+        /*if (mAuth.getCurrentUser() == null) {
             Intent intent = new Intent(this, DangNhapActivity.class);
             startActivity(intent);
             finish();
             return;
-        }
-        */
+        }*/
 
         setContentView(R.layout.activity_main);
 
@@ -80,8 +76,11 @@ public class MainActivity extends AppCompatActivity {
         tabSuppliers.setOnClickListener(v -> selectTab(TAB_SUPPLIERS));
         tabManage.setOnClickListener(v -> selectTab(TAB_MANAGE));
 
-        // Vào thẳng tab Sản phẩm
-        selectTab(TAB_PRODUCTS);
+        if (getIntent().getBooleanExtra("SELECT_MODE", false)) {
+            selectTab(TAB_PRODUCTS);
+        } else {
+            selectTab(TAB_SUPPLIERS);  // TODO: Thay đổi thành TAB_ORDERS khi phát triển xong
+        }
     }
 
     private void selectTab(int index) {

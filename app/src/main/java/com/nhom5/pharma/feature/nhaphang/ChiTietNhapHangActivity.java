@@ -15,6 +15,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.nhom5.pharma.R;
+import com.nhom5.pharma.util.FirestoreValueParser;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -112,9 +113,10 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
     }
 
     private void displayNhapHangInfo(NhapHang nhapHang) {
-        tvOrderCodeTitle.setText(nhapHang.getId());
-        if (nhapHang.isTrangThai()) {
-            tvTrangThaiHeader.setText("Đã nhập hàng");
+        tvOrderCodeTitle.setText(nhapHang.getDisplayId());
+        int trangThai = nhapHang.getTrangThaiValue();
+        if (trangThai == 1) {
+            tvTrangThaiHeader.setText("Đã nhập kho");
             tvTrangThaiHeader.setTextColor(Color.parseColor("#4CAF50"));
         } else {
             tvTrangThaiHeader.setText("Đã hủy");
@@ -132,7 +134,9 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
             if (doc.exists()) {
                 String name = doc.getString("tenNCC");
                 if (name == null) name = doc.getString("TenNCC");
-                tvTenNhaCungCap.setText(name);
+                if (name == null) name = doc.getString("tenNhaCungCap");
+                if (name == null) name = doc.getString("ten");
+                tvTenNhaCungCap.setText(name != null ? name : "Không xác định");
             }
         });
     }
@@ -158,8 +162,8 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                 View itemView = LayoutInflater.from(this).inflate(R.layout.item_chi_tiet_lo_hang, llChiTiet, false);
                 ((TextView)itemView.findViewById(R.id.tvSoLo)).setText(doc.getId());
                 
-                Double sl = doc.getDouble("soLuong");
-                Double dg = doc.getDouble("donGiaNhap");
+                Double sl = FirestoreValueParser.safeDouble(FirestoreValueParser.safeRaw(doc, "soLuong"));
+                Double dg = FirestoreValueParser.safeDouble(FirestoreValueParser.safeRaw(doc, "donGiaNhap"));
                 
                 double soLuong = sl != null ? sl : 0;
                 double donGia = dg != null ? dg : 0;
@@ -172,8 +176,8 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                 if (maSP != null) {
                     repository.getProductById(maSP).addOnSuccessListener(spDoc -> {
                         if (spDoc.exists()) {
-                            String tenSP = spDoc.getString("tenSP");
-                            if (tenSP == null) tenSP = spDoc.getString("TenSP");
+                            String tenSP = FirestoreValueParser.safeString(spDoc, "tenSP");
+                            if (tenSP == null) tenSP = FirestoreValueParser.safeString(spDoc, "TenSP");
                             ((TextView)itemView.findViewById(R.id.tvTenHang)).setText(tenSP);
                         }
                     });

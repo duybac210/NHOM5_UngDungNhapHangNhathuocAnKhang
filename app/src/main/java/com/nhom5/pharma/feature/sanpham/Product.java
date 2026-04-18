@@ -16,6 +16,7 @@ public class Product {
     private String moTa;
     private String hangSX;
     private String nuocSX;
+    private String displayId;
     
     @PropertyName("trangThai")
     private Object trangThai; 
@@ -34,15 +35,14 @@ public class Product {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    // Logic quan trọng: Nếu không có tên, trả về mã hàng để không bị trống dòng
+    public String getMaID() { return maID != null ? maID : id; }
+    public void setMaID(String maID) { this.maID = maID; }
+
     public String getTenSP() { 
         if (tenSP != null && !tenSP.isEmpty()) return tenSP;
         return (maID != null) ? "Mã: " + maID : (id != null ? "Mã: " + id : "(Chưa có tên)");
     }
     public void setTenSP(String tenSP) { this.tenSP = tenSP; }
-
-    public String getMaID() { return maID != null ? maID : id; }
-    public void setMaID(String maID) { this.maID = maID; }
 
     public double getGiavon() { return giavon; }
     public void setGiavon(double giavon) { this.giavon = giavon; }
@@ -61,6 +61,9 @@ public class Product {
 
     public String getNuocSX() { return nuocSX != null ? nuocSX : ""; }
     public void setNuocSX(String nuocSX) { this.nuocSX = nuocSX; }
+
+    public String getDisplayId() { return displayId != null ? displayId : id; }
+    public void setDisplayId(String displayId) { this.displayId = displayId; }
 
     @PropertyName("trangThai")
     public Object getTrangThai() { return trangThai; }

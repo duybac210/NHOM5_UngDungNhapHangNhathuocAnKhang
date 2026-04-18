@@ -21,6 +21,7 @@ import com.nhom5.pharma.R;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHangAdapter.NhapHangViewHolder> {
 
     private int expandedPosition = -1;
@@ -30,10 +31,15 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         super(options);
     }
 
-    @Override
-    protected void onBindViewHolder(@NonNull NhapHangViewHolder holder, int position, @NonNull NhapHang model) {
-        String id = getSnapshots().getSnapshot(position).getId();
-        holder.tvMaDon.setText(id);
+     @Override
+     @SuppressWarnings("RestrictedApi")
+     protected void onBindViewHolder(@NonNull NhapHangViewHolder holder, int position, @NonNull NhapHang model) {
+        String documentId = getSnapshots().getSnapshot(position).getId();
+        String displayId = model.getDisplayId();
+        if (displayId == null || displayId.trim().isEmpty()) {
+            displayId = documentId;
+        }
+        holder.tvMaDon.setText(displayId);
 
         if (model.getNgayTao() != null) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
@@ -42,11 +48,12 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
 
         holder.tvTongTien.setText(String.format(Locale.getDefault(), "%,.0fđ", model.getTongTien()));
 
-        if (model.isTrangThai()) {
-            holder.tvTrangThai.setText("Đã nhập hàng");
+        int trangThai = model.getTrangThaiValue();
+        if (trangThai == 1) {
+            holder.tvTrangThai.setText(R.string.import_status_imported);
             holder.tvTrangThai.setTextColor(Color.parseColor("#4CAF50"));
         } else {
-            holder.tvTrangThai.setText("Đã hủy");
+            holder.tvTrangThai.setText(R.string.import_status_cancelled);
             holder.tvTrangThai.setTextColor(Color.parseColor("#F44336"));
         }
 
@@ -55,7 +62,7 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         holder.expandableDetail.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
         
         if (isExpanded) {
-            loadDetailContent(holder, id, model);
+            loadDetailContent(holder, documentId, model);
         }
 
         holder.itemView.setOnClickListener(v -> {
@@ -69,11 +76,11 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
             notifyItemChanged(expandedPosition);
         });
 
-        holder.btnXoaDetail.setOnClickListener(v -> showDeleteConfirmation(holder.itemView, id));
+        holder.btnXoaDetail.setOnClickListener(v -> showDeleteConfirmation(holder.itemView, documentId));
         
         holder.btnSuaDetail.setOnClickListener(v -> {
             // Logic cho nút Sửa (có thể mở màn hình chỉnh sửa hoặc Dialog)
-            Toast.makeText(v.getContext(), "Tính năng sửa đang được phát triển cho mã " + id, Toast.LENGTH_SHORT).show();
+            Toast.makeText(v.getContext(), "Tính năng sửa đang được phát triển cho mã " + documentId, Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -87,7 +94,7 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         Button btnXoa = dialogView.findViewById(R.id.btnXoaConfirm);
         TextView tvMessage = dialogView.findViewById(R.id.tvDeleteMessage);
 
-        tvMessage.setText("Xóa phiếu nhập hàng " + orderId + "?");
+        tvMessage.setText(String.format(view.getContext().getString(R.string.import_order_delete_message), orderId));
 
         btnBoQua.setOnClickListener(v -> dialog.dismiss());
         btnXoa.setOnClickListener(v -> {
@@ -101,7 +108,8 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         dialog.show();
     }
 
-    private void loadDetailContent(NhapHangViewHolder holder, String orderId, NhapHang model) {
+     @SuppressWarnings("RestrictedApi")
+     private void loadDetailContent(NhapHangViewHolder holder, String orderId, NhapHang model) {
         if (model.getNgayTao() != null) {
             SimpleDateFormat sdfFull = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
             holder.tvNgayNhapDetail.setText(sdfFull.format(model.getNgayTao()));
@@ -112,7 +120,9 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
                 if (doc.exists()) {
                     String name = doc.getString("tenNCC");
                     if (name == null) name = doc.getString("TenNCC");
-                    holder.tvNhaCungCapDetail.setText(name);
+                    if (name == null) name = doc.getString("tenNhaCungCap");
+                    if (name == null) name = doc.getString("ten");
+                    holder.tvNhaCungCapDetail.setText(name != null ? name : "Không xác định");
                 }
             });
         }
@@ -124,7 +134,7 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
                     if (name == null) name = doc.getString("hoTen");
                     holder.tvNguoiNhapDetail.setText(name != null ? name : model.getMaNguoiNhap());
                 } else {
-                    holder.tvNguoiNhapDetail.setText("Mã: " + model.getMaNguoiNhap());
+                    holder.tvNguoiNhapDetail.setText(String.format(holder.itemView.getContext().getString(R.string.user_code_format), model.getMaNguoiNhap()));
                 }
             });
         }
@@ -169,7 +179,7 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         return new NhapHangViewHolder(view);
     }
 
-    static class NhapHangViewHolder extends RecyclerView.ViewHolder {
+    public static class NhapHangViewHolder extends RecyclerView.ViewHolder {
         TextView tvMaDon, tvNgayNhap, tvTongTien, tvTrangThai;
         View expandableDetail;
         TextView tvNguoiNhapDetail, tvNgayNhapDetail, tvNhaCungCapDetail;

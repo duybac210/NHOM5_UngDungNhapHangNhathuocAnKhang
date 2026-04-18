@@ -1,6 +1,8 @@
 package com.nhom5.pharma.feature.sanpham;
 
 import android.app.AlertDialog;
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -24,33 +26,37 @@ import com.nhom5.pharma.R;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class SanPhamFragment extends Fragment implements ProductAdapter.OnProductClickListener {
 
     private ProductViewModel viewModel;
     private ProductAdapter adapter;
     private List<Product> fullList = new ArrayList<>();
-    private EditText searchEditText; // Đưa lên làm biến toàn cục để truy cập từ observe
+    private EditText searchEditText;
+    private boolean isSelectMode = false;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_san_pham, container, false);
-        
+
+        if (getActivity() != null && getActivity().getIntent() != null) {
+            isSelectMode = getActivity().getIntent().getBooleanExtra("SELECT_MODE", false);
+        }
+
         RecyclerView rvProducts = view.findViewById(R.id.rv_products);
         rvProducts.setLayoutManager(new LinearLayoutManager(getContext()));
-        
-        adapter = new ProductAdapter(this);
+
+        adapter = new ProductAdapter(this, isSelectMode);
         rvProducts.setAdapter(adapter);
 
         viewModel = new ViewModelProvider(this).get(ProductViewModel.class);
         
-        // ĐỒNG BỘ REAL-TIME: Firebase thay đổi -> App cập nhật ngay
+        // ĐỒNG BỘ REAL-TIME CỦA TRÀ MY
         viewModel.getProducts().observe(getViewLifecycleOwner(), products -> {
             if (products != null) {
                 fullList = products;
-                
-                // Nếu đang có từ khóa tìm kiếm, phải lọc lại danh sách mới vừa nhận về
                 String currentQuery = (searchEditText != null) ? searchEditText.getText().toString() : "";
                 if (currentQuery.isEmpty()) {
                     adapter.setProductList(products);
@@ -66,12 +72,21 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         }
 
         View btnAddNew = view.findViewById(R.id.btnAddNew);
+        View searchBarContainer = view.findViewById(R.id.search_bar);
+        if (btnAddNew == null && searchBarContainer != null) {
+            btnAddNew = searchBarContainer.findViewById(R.id.btnAddNew);
+        }
+        
         if (btnAddNew != null) {
-            // Vô hiệu hóa theo yêu cầu trước đó của bạn
+            // Vô hiệu hóa theo yêu cầu của bạn
             btnAddNew.setOnClickListener(null); 
         }
 
         searchEditText = view.findViewById(R.id.searchEditText);
+        if (searchEditText == null && searchBarContainer != null) {
+            searchEditText = searchBarContainer.findViewById(R.id.searchEditText);
+        }
+        
         if (searchEditText != null) {
             searchEditText.setHint("Tìm kiếm sản phẩm...");
             searchEditText.addTextChangedListener(new TextWatcher() {
@@ -87,19 +102,31 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
     }
 
     private void filterLocal(String query) {
-        if (query.isEmpty()) {
+        if (query == null || query.trim().isEmpty()) {
             adapter.setProductList(fullList);
-        } else {
-            List<Product> filtered = new ArrayList<>();
-            String q = query.toLowerCase();
-            for (Product p : fullList) {
-                if ((p.getTenSP() != null && p.getTenSP().toLowerCase().contains(q)) || 
-                    (p.getId() != null && p.getId().toLowerCase().contains(q))) {
-                    filtered.add(p);
-                }
-            }
-            adapter.setProductList(filtered);
+            return;
         }
+
+        String q = query.toLowerCase(Locale.getDefault());
+        List<Product> filtered = new ArrayList<>();
+        for (Product p : fullList) {
+            if ((p.getTenSP() != null && p.getTenSP().toLowerCase(Locale.getDefault()).contains(q)) ||
+                (p.getId() != null && p.getId().toLowerCase(Locale.getDefault()).contains(q))) {
+                filtered.add(p);
+            }
+        }
+        adapter.setProductList(filtered);
+    }
+
+    @Override
+    public void onItemClick(Product product) {
+        if (!isSelectMode || getActivity() == null) return;
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("product_id", product.getId());
+        resultIntent.putExtra("product_name", product.getTenSP());
+        resultIntent.putExtra("product_price", product.getGiavon());
+        getActivity().setResult(Activity.RESULT_OK, resultIntent);
+        getActivity().finish();
     }
 
     @Override public void onEditClick(Product product) { showEditDialog(product); }
@@ -113,7 +140,6 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         dialogView.findViewById(R.id.iv_close_dialog).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.tv_skip).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.btn_confirm_yes).setOnClickListener(v -> {
-            // App xóa -> Firebase mất ngay lập tức
             viewModel.deleteProduct(product.getId());
             dialog.dismiss();
             Toast.makeText(getContext(), "Đã xóa sản phẩm", Toast.LENGTH_SHORT).show();
@@ -137,7 +163,7 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
             etMaHang.setText(product.getId());
             etMaHang.setEnabled(false);
             etTenHang.setText(product.getTenSP());
-            etGiaVon.setText(String.format("%.0f", product.getGiavon()));
+            etGiaVon.setText(String.format(Locale.getDefault(), "%.0f", product.getGiavon()));
         }
 
         if (ivClose != null) ivClose.setOnClickListener(v -> dialog.dismiss());
@@ -149,15 +175,12 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
                 etTenHang.setError("Vui lòng nhập tên");
                 return;
             }
-
             Product p = (product != null) ? product : new Product();
             p.setTenSP(tenHang);
             try {
                 String gv = etGiaVon.getText().toString();
                 if (!gv.isEmpty()) p.setGiavon(Double.parseDouble(gv));
             } catch (Exception ignored) {}
-
-            // App lưu -> Firebase cập nhật ngay lập tức
             viewModel.saveProduct(p);
             dialog.dismiss();
         });

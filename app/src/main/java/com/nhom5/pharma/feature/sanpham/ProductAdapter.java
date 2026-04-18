@@ -18,21 +18,31 @@ import java.util.Locale;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductViewHolder> {
 
-    private List<Product> productList = new ArrayList<>();
-    private int expandedPosition = -1;
-    private final OnProductClickListener listener;
-
     public interface OnProductClickListener {
+        void onItemClick(Product product);
         void onEditClick(Product product);
         void onDeleteClick(Product product);
     }
 
+    private final OnProductClickListener listener;
+    private final boolean selectMode;
+    private final List<Product> productList = new ArrayList<>();
+    private int expandedPosition = -1;
+
     public ProductAdapter(OnProductClickListener listener) {
+        this(listener, false);
+    }
+
+    public ProductAdapter(OnProductClickListener listener, boolean selectMode) {
         this.listener = listener;
+        this.selectMode = selectMode;
     }
 
     public void setProductList(List<Product> newList) {
-        this.productList = newList;
+        productList.clear();
+        if (newList != null) {
+            productList.addAll(newList);
+        }
         notifyDataSetChanged();
     }
 
@@ -46,17 +56,27 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     @Override
     public void onBindViewHolder(@NonNull ProductViewHolder holder, int position) {
         Product product = productList.get(position);
-        holder.bind(product, position == expandedPosition);
+        boolean isExpanded = !selectMode && position == expandedPosition;
+        holder.bind(product, isExpanded, selectMode);
 
         holder.itemView.setOnClickListener(v -> {
+            if (selectMode) {
+                if (listener != null) listener.onItemClick(product);
+                return;
+            }
+
             int previousExpanded = expandedPosition;
             expandedPosition = (expandedPosition == holder.getBindingAdapterPosition()) ? -1 : holder.getBindingAdapterPosition();
-            notifyItemChanged(previousExpanded);
-            notifyItemChanged(expandedPosition);
+            if (previousExpanded >= 0) notifyItemChanged(previousExpanded);
+            if (expandedPosition >= 0) notifyItemChanged(expandedPosition);
         });
 
-        holder.btnEdit.setOnClickListener(v -> listener.onEditClick(product));
-        holder.btnDelete.setOnClickListener(v -> listener.onDeleteClick(product));
+        holder.btnEdit.setOnClickListener(v -> {
+            if (listener != null) listener.onEditClick(product);
+        });
+        holder.btnDelete.setOnClickListener(v -> {
+            if (listener != null) listener.onDeleteClick(product);
+        });
     }
 
     @Override
@@ -70,7 +90,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         View layoutDetail, btnDelete, btnEdit, lineMaHang;
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
 
-        public ProductViewHolder(@NonNull View itemView) {
+        ProductViewHolder(@NonNull View itemView) {
             super(itemView);
             tvMaHang = itemView.findViewById(R.id.tv_ma_hang);
             tvTenHang = itemView.findViewById(R.id.tv_ten_hang);
@@ -86,7 +106,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             btnEdit = itemView.findViewById(R.id.btn_edit);
         }
 
-        void bind(Product product, boolean isExpanded) {
+        void bind(Product product, boolean isExpanded, boolean selectMode) {
             tvMaHang.setText(product.getId());
             tvTenHang.setText(product.getTenSP());
             tvGiaVon.setText(String.format(Locale.getDefault(), "%,.0f", product.getGiavon()));
@@ -95,6 +115,11 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
                 tvThoiGian.setText(sdf.format(product.getNgayTao()));
             } else {
                 tvThoiGian.setText("---");
+            }
+
+            if (selectMode) {
+                layoutDetail.setVisibility(View.GONE);
+                return;
             }
 
             int blueColor = Color.parseColor("#2196f3");
