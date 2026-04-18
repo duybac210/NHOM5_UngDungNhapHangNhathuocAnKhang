@@ -30,6 +30,7 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
     private ProductViewModel viewModel;
     private ProductAdapter adapter;
     private List<Product> fullList = new ArrayList<>();
+    private EditText searchEditText; // Đưa lên làm biến toàn cục để truy cập từ observe
 
     @Nullable
     @Override
@@ -44,27 +45,33 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
 
         viewModel = new ViewModelProvider(this).get(ProductViewModel.class);
         
+        // ĐỒNG BỘ REAL-TIME: Firebase thay đổi -> App cập nhật ngay
         viewModel.getProducts().observe(getViewLifecycleOwner(), products -> {
             if (products != null) {
                 fullList = products;
-                adapter.setProductList(products);
+                
+                // Nếu đang có từ khóa tìm kiếm, phải lọc lại danh sách mới vừa nhận về
+                String currentQuery = (searchEditText != null) ? searchEditText.getText().toString() : "";
+                if (currentQuery.isEmpty()) {
+                    adapter.setProductList(products);
+                } else {
+                    filterLocal(currentQuery);
+                }
             }
         });
 
-        // Cập nhật tiêu đề từ layout chung
         TextView tvTitle = view.findViewById(R.id.tvTitle);
         if (tvTitle != null) {
             tvTitle.setText("Quản lý sản phẩm");
         }
 
-        // Nút thêm sản phẩm (+)
         View btnAddNew = view.findViewById(R.id.btnAddNew);
         if (btnAddNew != null) {
-            btnAddNew.setOnClickListener(v -> showEditDialog(null));
+            // Vô hiệu hóa theo yêu cầu trước đó của bạn
+            btnAddNew.setOnClickListener(null); 
         }
 
-        // Thanh tìm kiếm
-        EditText searchEditText = view.findViewById(R.id.searchEditText);
+        searchEditText = view.findViewById(R.id.searchEditText);
         if (searchEditText != null) {
             searchEditText.setHint("Tìm kiếm sản phẩm...");
             searchEditText.addTextChangedListener(new TextWatcher() {
@@ -84,8 +91,8 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
             adapter.setProductList(fullList);
         } else {
             List<Product> filtered = new ArrayList<>();
+            String q = query.toLowerCase();
             for (Product p : fullList) {
-                String q = query.toLowerCase();
                 if ((p.getTenSP() != null && p.getTenSP().toLowerCase().contains(q)) || 
                     (p.getId() != null && p.getId().toLowerCase().contains(q))) {
                     filtered.add(p);
@@ -106,6 +113,7 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         dialogView.findViewById(R.id.iv_close_dialog).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.tv_skip).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.btn_confirm_yes).setOnClickListener(v -> {
+            // App xóa -> Firebase mất ngay lập tức
             viewModel.deleteProduct(product.getId());
             dialog.dismiss();
             Toast.makeText(getContext(), "Đã xóa sản phẩm", Toast.LENGTH_SHORT).show();
@@ -120,27 +128,18 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
 
         TextView tvDialogTitle = dialogView.findViewById(R.id.tv_dialog_title);
         EditText etMaHang = dialogView.findViewById(R.id.et_ma_hang);
-        EditText etMaVach = dialogView.findViewById(R.id.et_ma_vach);
         EditText etTenHang = dialogView.findViewById(R.id.et_ten_hang);
         EditText etGiaVon = dialogView.findViewById(R.id.et_gia_von);
-        EditText etHangSX = dialogView.findViewById(R.id.et_hang_sx);
-        EditText etNuocSX = dialogView.findViewById(R.id.et_nuoc_sx);
         View ivClose = dialogView.findViewById(R.id.iv_close);
 
         if (product != null) {
             tvDialogTitle.setText("Sửa hàng hóa");
             etMaHang.setText(product.getId());
-            etMaVach.setText(product.getMaVach());
+            etMaHang.setEnabled(false);
             etTenHang.setText(product.getTenSP());
             etGiaVon.setText(String.format("%.0f", product.getGiavon()));
-            etHangSX.setText(product.getHangSX());
-            etNuocSX.setText(product.getNuocSX());
-        } else {
-            tvDialogTitle.setText("Thêm hàng hóa");
-            etMaHang.setHint("Tự động tạo");
         }
 
-        // Nút X và nút Bỏ qua để thoát dialog
         if (ivClose != null) ivClose.setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.btn_cancel).setOnClickListener(v -> dialog.dismiss());
 
@@ -151,20 +150,16 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
                 return;
             }
 
-            Product p = product != null ? product : new Product();
+            Product p = (product != null) ? product : new Product();
             p.setTenSP(tenHang);
-            p.setMaVach(etMaVach.getText().toString());
-            p.setHangSX(etHangSX.getText().toString());
-            p.setNuocSX(etNuocSX.getText().toString());
-            p.setTrangThai(true);
             try {
                 String gv = etGiaVon.getText().toString();
                 if (!gv.isEmpty()) p.setGiavon(Double.parseDouble(gv));
             } catch (Exception ignored) {}
 
+            // App lưu -> Firebase cập nhật ngay lập tức
             viewModel.saveProduct(p);
             dialog.dismiss();
-            Toast.makeText(getContext(), "Đã lưu thành công", Toast.LENGTH_SHORT).show();
         });
 
         dialog.show();

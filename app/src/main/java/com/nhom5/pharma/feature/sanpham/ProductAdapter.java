@@ -66,7 +66,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {
         TextView tvMaHang, tvTenHang, tvGiaVon, tvThoiGian;
-        TextView tvDetailTen, tvDetailMaHang, tvDetailMoTa;
+        TextView tvDetailTen, tvDetailMaHang, tvDetailMaVach, tvDetailGiaVon;
         View layoutDetail, btnDelete, btnEdit, lineMaHang;
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
 
@@ -80,7 +80,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             layoutDetail = itemView.findViewById(R.id.layout_detail);
             tvDetailTen = itemView.findViewById(R.id.tv_detail_ten);
             tvDetailMaHang = itemView.findViewById(R.id.tv_detail_ma_hang);
-            tvDetailMoTa = itemView.findViewById(R.id.tv_detail_mo_ta);
+            tvDetailMaVach = itemView.findViewById(R.id.tv_detail_ma_vach);
+            tvDetailGiaVon = itemView.findViewById(R.id.tv_detail_gia_von);
             btnDelete = itemView.findViewById(R.id.btn_delete);
             btnEdit = itemView.findViewById(R.id.btn_edit);
         }
@@ -98,8 +99,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
             int blueColor = Color.parseColor("#2196f3");
             int blackColor = Color.BLACK;
-
-            // Đổi màu dựa trên việc có đang xem chi tiết (isExpanded) hay không
             int color = isExpanded ? blueColor : blackColor;
 
             tvMaHang.setTextColor(color);
@@ -107,17 +106,14 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             tvGiaVon.setTextColor(color);
             tvThoiGian.setTextColor(color);
 
-            // Gạch chân màu xanh dưới mã hàng khi xem chi tiết
-            if (lineMaHang != null) {
-                lineMaHang.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
-            }
-
+            if (lineMaHang != null) lineMaHang.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
             layoutDetail.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
 
             if (isExpanded) {
                 tvDetailTen.setText(product.getTenSP());
                 tvDetailMaHang.setText(product.getId());
-                tvDetailMoTa.setText(product.getMoTa() != null ? product.getMoTa() : "Chưa có mô tả");
+                tvDetailMaVach.setText(product.getMaVach() != null && !product.getMaVach().isEmpty() ? product.getMaVach() : "Chưa có");
+                tvDetailGiaVon.setText(String.format(Locale.getDefault(), "%,.0f", product.getGiavon()));
             }
         }
     }
