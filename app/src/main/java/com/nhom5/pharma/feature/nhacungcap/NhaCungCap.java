@@ -1,10 +1,7 @@
 package com.nhom5.pharma.feature.nhacungcap;
 
 import com.google.firebase.firestore.DocumentId;
-import com.google.firebase.firestore.PropertyName;
-import com.google.firebase.firestore.ServerTimestamp;
 import java.io.Serializable;
-import java.util.Date;
 
 public class NhaCungCap implements Serializable {
     @DocumentId
@@ -20,10 +17,10 @@ public class NhaCungCap implements Serializable {
     private Date ngayTao;
     private Date ngayCapNhat;
 
-    private Object TongDon; 
-    private Object GiaTri;  
-    private Object soLuong; 
-    private Object tongMua; 
+    private Object TongDon;
+    private Object GiaTri;
+    private Object soLuong;
+    private Object tongMua;
 
     public NhaCungCap() {}
 

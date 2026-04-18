@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <!-- Dòng danh sách: Đồng bộ TỈ LỆ và KÍCH THƯỚC với Nhập hàng -->
+    <LinearLayout
+        android:id="@+id/layout_main"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:gravity="center"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/tv_ma_hang"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:textSize="13sp"
+                tools:text="SP0001" />
+            <View
+                android:id="@+id/line_ma_hang"
+                android:layout_width="45dp"
+                android:layout_height="1.5dp"
+                android:background="#2196f3"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_ten_hang"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.1"
+            android:textColor="#000000"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Panadol Extra" />
+
+        <TextView
+            android:id="@+id/tv_gia_von"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.2"
+            android:textColor="#000000"
+            android:textSize="13sp"
+            android:gravity="center"
+            tools:text="120.000" />
+
+        <TextView
+            android:id="@+id/tv_thoi_gian"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.4"
+            android:textColor="#000000"
+            android:textSize="13sp"
+            android:gravity="center"
+            tools:text="17/04/2026 13:30" />
+    </LinearLayout>
+
+    <!-- Phần chi tiết: GIỮ NGUYÊN giao diện của bạn -->
+    <FrameLayout
+        android:id="@+id/layout_detail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_detail_product_box"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tv_detail_ten"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Panadol Extra" />
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="12dp" android:background="#EEEEEE" />
+
+            <!-- Field: Ma hang -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Mã hàng" android:textColor="#000000" android:textSize="12sp" />
+            <TextView android:id="@+id/tv_detail_ma_hang" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#000000" android:textSize="14sp" android:textStyle="bold" tools:text="SP0001" />
+
+            <!-- Field: Mô tả -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="Mô tả sản phẩm" android:textColor="#000000" android:textSize="12sp" />
+            <TextView android:id="@+id/tv_detail_mo_ta" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#000000" android:textSize="14sp" tools:text="Giảm đau đầu, hạ sốt nhanh" />
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="12dp" android:background="#EEEEEE" />
+
+            <!-- Buttons Section -->
+            <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp">
+                <!-- Nút Xóa với icon thùng rác chuẩn mẫu -->
+                <LinearLayout android:id="@+id/btn_delete"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="4dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@android:drawable/ic_menu_delete"
+                        app:tint="#444444" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Xóa"
+                        android:textColor="#000000"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:backgroundTint="#007BFF"
+                    android:text="Chỉnh sửa"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="20dp"
+                    app:icon="@drawable/ic_edit"
+                    app:iconGravity="textStart"
+                    app:iconSize="16dp" />
+            </RelativeLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE" />
+</LinearLayout>

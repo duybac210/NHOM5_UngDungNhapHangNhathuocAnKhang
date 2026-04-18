@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
+import com.nhom5.pharma.feature.lohang.LoHangFilterType;
 
 public class NhapHangRepository {
     private static NhapHangRepository instance;
@@ -28,6 +29,11 @@ public class NhapHangRepository {
                 .orderBy("ngayTao", Query.Direction.DESCENDING);
     }
 
+    public Query getAllLoHang() {
+        return db.collection("LoHang")
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING);
+    }
+
     // Tìm kiếm theo Mã đơn (Document ID) thời gian thực
     public Query searchByMaDon(String searchText) {
         if (searchText == null || searchText.trim().isEmpty()) {
@@ -38,6 +44,32 @@ public class NhapHangRepository {
                 .orderBy(FieldPath.documentId())
                 .startAt(searchText)
                 .endAt(searchText + "\uf8ff");
+    }
+
+    public Query searchLoHang(String searchText) {
+        if (searchText == null || searchText.trim().isEmpty()) {
+            return getAllLoHang();
+        }
+
+        String keyword = searchText.trim();
+        return db.collection("LoHang")
+                .orderBy(FieldPath.documentId())
+                .startAt(keyword)
+                .endAt(keyword + "\uf8ff");
+    }
+
+    public Query getLoHangByFilter(int filterType) {
+        switch (filterType) {
+            case LoHangFilterType.EXPIRING_SOON:
+            case LoHangFilterType.EXPIRED:
+                // 2 filter nay can tinh (hanSuDung - ngayNhap), xu ly o Adapter.
+                return getAllLoHang();
+            case LoHangFilterType.LOW_STOCK:
+                return getAllLoHang();
+            case LoHangFilterType.ALL:
+            default:
+                return getAllLoHang();
+        }
     }
 
     public Task<DocumentSnapshot> getNhapHangById(String id) {
@@ -57,6 +89,10 @@ public class NhapHangRepository {
         return db.collection("LoHang")
                 .whereEqualTo("maNhapHang", nhapHangId)
                 .get();
+    }
+
+    public Task<DocumentSnapshot> getLoHangById(String soLo) {
+        return db.collection("LoHang").document(soLo).get();
     }
 
     public Task<DocumentSnapshot> getProductById(String maSP) {
