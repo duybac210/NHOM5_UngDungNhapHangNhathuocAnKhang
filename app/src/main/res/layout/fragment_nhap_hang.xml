@@ -5,9 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#f8f9fa"
-    tools:context=".feature.nhaphang.NhapHangFragment">
+    tools:context=".feature.nhaphang.ChiTietNhapHangActivity$NhapHangFragment">
 
-    <!-- Search Bar Section -->
+    <!-- Search Bar Section with Add Button -->
     <include
         android:id="@+id/search_bar"
         layout="@layout/layout_common_search_bar"
@@ -32,28 +32,11 @@
         android:id="@+id/recyclerViewNhapHang"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="0dp"
-        android:layout_marginStart="0dp"
-        android:layout_marginEnd="0dp"
-        android:layout_marginBottom="0dp"
         android:background="#ffffff"
-        android:padding="0dp"
         app:layout_constraintTop_toBottomOf="@id/table_header"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/item_nhap_hang" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAdd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_add"
-        app:backgroundTint="#48B645"
-        app:tint="@color/white"
-        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.SmallComponent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

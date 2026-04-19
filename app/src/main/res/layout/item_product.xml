@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <!-- Dòng danh sách tổng quan: Cân lại tỉ lệ để hạn chế xuống hàng -->
+    <LinearLayout
+        android:id="@+id/layout_main"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.75"
+            android:gravity="center"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/tv_ma_hang"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:textSize="13sp"
+                tools:text="NT00038" />
+            <View
+                android:id="@+id/line_ma_hang"
+                android:layout_width="45dp"
+                android:layout_height="1.2dp"
+                android:background="#2196f3"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Tăng weight lên 1.25 và ép maxLines=1 để không xuống hàng -->
+        <TextView
+            android:id="@+id/tv_ten_hang"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.25"
+            android:textColor="#000000"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Anaferon Tăng Sức Đề Kháng" />
+
+        <TextView
+            android:id="@+id/tv_gia_von"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.1"
+            android:textColor="#000000"
+            android:textSize="13sp"
+            android:gravity="center"
+            tools:text="120.000" />
+
+        <TextView
+            android:id="@+id/tv_thoi_gian"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.4"
+            android:textColor="#000000"
+            android:textSize="12sp"
+            android:gravity="center"
+            tools:text="27/02/2026 10:50" />
+    </LinearLayout>
+
+    <!-- Chi tiết mở rộng: Giữ nguyên độ đậm nhạt chuẩn -->
+    <FrameLayout
+        android:id="@+id/layout_detail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="10dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_detail_product_box"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tv_detail_ten"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:textSize="19sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="18dp"
+                tools:text="Anaferon Tăng sức đề kháng" />
+
+            <!-- Mã hàng: ĐẬM NHẤT -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Mã hàng" android:textColor="#666666" android:textSize="13sp" />
+            <TextView android:id="@+id/tv_detail_ma_hang" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#000000" android:textSize="15sp" android:textStyle="bold" android:layout_marginTop="2dp" tools:text="NT00038" />
+            <View android:layout_width="match_parent" android:layout_height="0.8dp" android:layout_marginTop="6dp" android:background="#CCCCCC" />
+
+            <!-- Mã vạch: Nhãn ĐẬM VỪA, Giá trị NHẠT -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Mã vạch" android:textColor="#333333" android:textSize="13sp" android:fontFamily="sans-serif-medium" />
+            <TextView android:id="@+id/tv_detail_ma_vach" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#555555" android:textSize="15sp" android:layout_marginTop="2dp" tools:text="Chưa có" />
+            <View android:layout_width="match_parent" android:layout_height="0.8dp" android:layout_marginTop="6dp" android:background="#CCCCCC" />
+
+            <!-- Giá vốn: Nhãn ĐẬM VỪA, Giá trị NHẠT -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Giá vốn" android:textColor="#333333" android:textSize="13sp" android:fontFamily="sans-serif-medium" />
+            <TextView android:id="@+id/tv_detail_gia_von" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#555555" android:textSize="15sp" android:layout_marginTop="2dp" tools:text="120.000" />
+            <View android:layout_width="match_parent" android:layout_height="0.8dp" android:layout_marginTop="6dp" android:background="#CCCCCC" />
+
+            <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="22dp">
+                <LinearLayout android:id="@+id/btn_delete"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="6dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true">
+                    <ImageView
+                        android:layout_width="20dp" android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_delete"
+                        app:tint="#555555" />
+                    <TextView
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Xóa" android:textColor="#000000"
+                        android:textSize="15sp" android:textStyle="bold" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_alignParentEnd="true"
+                    android:backgroundTint="#007BFF"
+                    android:text="Chỉnh sửa"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="18dp"
+                    app:icon="@android:drawable/ic_menu_edit"
+                    app:iconSize="14dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="16dp" />
+            </RelativeLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE" />
+</LinearLayout>

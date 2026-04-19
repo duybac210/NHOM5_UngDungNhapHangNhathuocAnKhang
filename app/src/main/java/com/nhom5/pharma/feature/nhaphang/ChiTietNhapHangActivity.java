@@ -1,20 +1,34 @@
 package com.nhom5.pharma.feature.nhaphang;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.Query;
 import com.nhom5.pharma.R;
+import com.nhom5.pharma.util.FirestoreValueParser;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -89,6 +103,7 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
     private void deleteOrder() {
         if (nhapHangId == null) return;
         repository.deleteNhapHang(nhapHangId).addOnSuccessListener(aVoid -> {
+            if (isFinishing() || isDestroyed()) return;
             Toast.makeText(this, "Đã xóa thành công", Toast.LENGTH_SHORT).show();
             finish(); 
         });
@@ -97,33 +112,32 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
     private void loadData() {
         if (nhapHangId == null) return;
         repository.getNhapHangById(nhapHangId).addOnSuccessListener(doc -> {
+            if (isFinishing() || isDestroyed()) return;
             if (doc.exists()) {
-                NhapHang nhapHang = doc.toObject(NhapHang.class);
-                if (nhapHang != null) {
-                    nhapHang.setId(doc.getId());
-                    displayNhapHangInfo(nhapHang);
-                    
-                    if (nhapHang.getMaNCC() != null) {
-                        fetchSupplierName(nhapHang.getMaNCC());
-                    }
-                    
-                    // Truy vấn tên người dùng thay vì để cứng Admin
-                    if (nhapHang.getMaNguoiNhap() != null) {
-                        fetchUserName(nhapHang.getMaNguoiNhap());
-                    } else {
-                        tvNguoiNhap.setText("Không xác định");
-                    }
-                    
-                    fetchLoHangList(doc.getId());
+                NhapHang nhapHang = NhapHang.fromDocument(doc);
+                displayNhapHangInfo(nhapHang);
+
+                if (nhapHang.getMaNCC() != null) {
+                    fetchSupplierName(nhapHang.getMaNCC());
                 }
+
+                if (nhapHang.getMaNguoiNhap() != null) {
+                    fetchUserName(nhapHang.getMaNguoiNhap());
+                } else {
+                    tvNguoiNhap.setText("Không xác định");
+                }
+
+                fetchLoHangList(doc.getId());
             }
         });
     }
 
     private void displayNhapHangInfo(NhapHang nhapHang) {
-        tvOrderCodeTitle.setText(nhapHang.getId());
-        if (nhapHang.isTrangThai()) {
-            tvTrangThaiHeader.setText("Đã nhập hàng");
+        if (tvOrderCodeTitle == null) return;
+        tvOrderCodeTitle.setText(nhapHang.getDisplayId());
+        int trangThai = nhapHang.getTrangThaiValue();
+        if (trangThai == 1) {
+            tvTrangThaiHeader.setText("Đã nhập kho");
             tvTrangThaiHeader.setTextColor(Color.parseColor("#4CAF50"));
         } else {
             tvTrangThaiHeader.setText("Đã hủy");
@@ -138,18 +152,21 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
 
     private void fetchSupplierName(String maNCC) {
         repository.getSupplierById(maNCC).addOnSuccessListener(doc -> {
+            if (isFinishing() || isDestroyed()) return;
             if (doc.exists()) {
                 String name = doc.getString("tenNCC");
                 if (name == null) name = doc.getString("TenNCC");
-                tvTenNhaCungCap.setText(name);
+                if (name == null) name = doc.getString("tenNhaCungCap");
+                if (name == null) name = doc.getString("ten");
+                tvTenNhaCungCap.setText(name != null ? name : "Không xác định");
             }
         });
     }
 
     private void fetchUserName(String maNguoiNhap) {
         repository.getUserById(maNguoiNhap).addOnSuccessListener(doc -> {
+            if (isFinishing() || isDestroyed()) return;
             if (doc.exists()) {
-                // Thử cả 2 trường hợp tên trường (tenNguoiDung hoặc hoTen)
                 String name = doc.getString("tenNguoiDung");
                 if (name == null) name = doc.getString("hoTen");
                 if (name == null) name = "Người dùng (" + maNguoiNhap + ")";
@@ -161,10 +178,12 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
     }
 
     private void fetchLoHangList(String id) {
+        if (llChiTiet == null) return;
         llChiTiet.removeAllViews();
         currentLoHangs.clear();
         isLoHangLoaded = false;
         repository.getLoHangByNhapHangId(id).addOnSuccessListener(snapshot -> {
+            if (isFinishing() || isDestroyed()) return;
             for (DocumentSnapshot doc : snapshot) {
                 String soLoDoc = doc.getId();
                 String maSpValue = firstNonEmpty(doc, "maSP", "MaSP", "maHang", "MaHang");
@@ -188,8 +207,11 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                 View itemView = LayoutInflater.from(this).inflate(R.layout.item_chi_tiet_lo_hang, llChiTiet, false);
                 ((TextView)itemView.findViewById(R.id.tvSoLo)).setText(soLoDoc);
 
-                double soLuong = soLuongValue;
-                double donGia = donGiaValue;
+                Double sl = FirestoreValueParser.safeDouble(FirestoreValueParser.safeRaw(doc, "soLuong"));
+                Double dg = FirestoreValueParser.safeDouble(FirestoreValueParser.safeRaw(doc, "donGiaNhap"));
+
+                double soLuong = sl != null ? sl : soLuongValue;
+                double donGia = dg != null ? dg : donGiaValue;
                 
                 ((TextView)itemView.findViewById(R.id.tvSoLuong)).setText(String.format(Locale.getDefault(), "%,.0f", soLuong));
                 ((TextView)itemView.findViewById(R.id.tvDonGia)).setText(String.format(Locale.getDefault(), "%,.0fđ", donGia));
@@ -197,9 +219,10 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                 
                 if (maSpValue != null) {
                     repository.getProductById(maSpValue).addOnSuccessListener(spDoc -> {
+                        if (isFinishing() || isDestroyed()) return;
                         if (spDoc.exists()) {
-                            String tenSP = spDoc.getString("tenSP");
-                            if (tenSP == null) tenSP = spDoc.getString("TenSP");
+                            String tenSP = FirestoreValueParser.safeString(spDoc, "tenSP");
+                            if (tenSP == null) tenSP = FirestoreValueParser.safeString(spDoc, "TenSP");
                             ((TextView)itemView.findViewById(R.id.tvTenHang)).setText(tenSP);
                         }
                     });

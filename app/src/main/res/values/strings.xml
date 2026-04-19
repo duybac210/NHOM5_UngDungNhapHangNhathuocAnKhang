@@ -7,8 +7,11 @@
     <string name="nav_batches">Lô hàng</string>
     <string name="nav_suppliers">Nhà cung cấp</string>
     <string name="nav_manage">Quản lý</string>
+    <string name="search_hint_generic">Tìm kiếm…</string>
+    <string name="search_icon_desc">Biểu tượng tìm kiếm</string>
+    <string name="add_new_desc">Thêm mới</string>
+    <string name="search_bar_title_orders">Quản lý đơn hàng</string>
     <string name="search_batches_hint">Tìm kiếm theo số lô</string>
-    <string name="search_icon_desc">Tìm kiếm</string>
     <string name="filter_icon_desc">Lọc</string>
     <string name="batch_manage_title">Quản lý lô hàng</string>
     <string name="filter_all">Tất cả</string>
@@ -18,4 +21,18 @@
     <string name="filter_expiry_asc">Sắp xếp lô gần hết hạn</string>
     <string name="filter_expiry_desc">Sắp xếp lô date xa</string>
     <string name="empty_lo_hang">Không có dữ liệu</string>
+    <string name="supplier_search_hint">Tìm kiếm theo mã nhà cung cấp</string>
+    <string name="supplier_manage_title">Quản lý nhà cung cấp</string>
+    <string name="supplier_code">Mã NCC</string>
+    <string name="supplier_name">Tên NCC</string>
+    <string name="supplier_phone">Điện thoại</string>
+    <string name="supplier_email">Email</string>
+    <string name="supplier_total_purchase">Tổng mua</string>
+    <string name="supplier_add_desc">Thêm nhà cung cấp mới</string>
+    <string name="import_order_delete_message">Xóa phiếu nhập hàng %1$s?</string>
+    <string name="unknown_label">Không xác định</string>
+    <string name="import_status_imported">Đã nhập kho</string>
+    <string name="import_status_cancelled">Đã hủy</string>
+    <string name="user_code_format">Mã: %1$s</string>
+    <string name="import_order_title">Chi tiết đơn nhập hàng</string>
 </resources>
