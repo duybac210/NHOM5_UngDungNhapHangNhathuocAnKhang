@@ -4,13 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.ImageButton;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,45 +24,24 @@ public class NhaCungCapFragment extends Fragment {
     private NhaCungCapAdapter adapter;
     private NhaCungCapRepository repository;
     private EditText edtSearch;
+    private ImageButton btnAddNCC;
 
     public NhaCungCapFragment() {}
 
     @Override
-<<<<<<< HEAD
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-=======
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
->>>>>>> f6626e1bd9cc4d313d85fe4f8056470d2969e674
         View view = inflater.inflate(R.layout.fragment_nha_cung_cap, container, false);
         
         rvNhaCungCap = view.findViewById(R.id.rvNhaCungCap);
-        edtSearch = view.findViewById(R.id.searchEditText);
+        edtSearch = view.findViewById(R.id.edtSearch); // Fix ID match với XML
+        btnAddNCC = view.findViewById(R.id.btnAddNCC);
+        
         repository = NhaCungCapRepository.getInstance();
 
         setupRecyclerView();
         setupSearch();
+        setupAddButton();
 
-<<<<<<< HEAD
-=======
-        View btnAddNcc = view.findViewById(R.id.btnAddNCC);
-        if (btnAddNcc != null) {
-            Log.d("NhaCungCapFragment", "Button found: btnAddNCC");
-            btnAddNcc.setClickable(true);
-            btnAddNcc.setEnabled(true);
-            btnAddNcc.setOnClickListener(v -> {
-                try {
-                    Log.d("NhaCungCapFragment", "Button clicked!");
-                    startActivity(new Intent(requireActivity(), CreateSupplierActivity.class));
-                } catch (Exception e) {
-                    Toast.makeText(requireContext(), "Không mở được màn tạo nhà cung cấp: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    Log.e("NhaCungCapFragment", "Error opening CreateSupplierActivity", e);
-                }
-            });
-        } else {
-            Log.w("NhaCungCapFragment", "Button NOT found: btnAddNCC");
-        }
-
->>>>>>> f6626e1bd9cc4d313d85fe4f8056470d2969e674
         return view;
     }
 
@@ -70,7 +49,7 @@ public class NhaCungCapFragment extends Fragment {
         Query query = repository.getAllNhaCungCap();
         FirestoreRecyclerOptions<NhaCungCap> options = new FirestoreRecyclerOptions.Builder<NhaCungCap>()
                 .setQuery(query, NhaCungCap.class)
-                .setLifecycleOwner(getViewLifecycleOwner()) // THÊM DÒNG NÀY ĐỂ CHỐNG VĂNG APP
+                .setLifecycleOwner(getViewLifecycleOwner())
                 .build();
 
         adapter = new NhaCungCapAdapter(options);
@@ -96,19 +75,7 @@ public class NhaCungCapFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String searchText = s.toString().trim();
-<<<<<<< HEAD
-                Query newQuery;
-                if (searchText.isEmpty()) {
-                    newQuery = repository.getAllNhaCungCap();
-                } else {
-                    newQuery = repository.getAllNhaCungCap()
-                            .orderBy("tenNCC")
-                            .startAt(searchText)
-                            .endAt(searchText + "\uf8ff");
-                }
-=======
                 Query newQuery = repository.searchById(searchText);
->>>>>>> f6626e1bd9cc4d313d85fe4f8056470d2969e674
                 
                 FirestoreRecyclerOptions<NhaCungCap> newOptions = new FirestoreRecyclerOptions.Builder<NhaCungCap>()
                         .setQuery(newQuery, NhaCungCap.class)
@@ -122,5 +89,12 @@ public class NhaCungCapFragment extends Fragment {
         });
     }
 
-    // Xóa startListening và stopListening vì đã có LifecycleOwner tự quản lý
+    private void setupAddButton() {
+        if (btnAddNCC != null) {
+            btnAddNCC.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), CreateSupplierActivity.class);
+                startActivity(intent);
+            });
+        }
+    }
 }

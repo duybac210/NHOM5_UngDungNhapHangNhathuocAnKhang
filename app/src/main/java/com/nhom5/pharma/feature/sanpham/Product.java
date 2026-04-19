@@ -1,12 +1,19 @@
 package com.nhom5.pharma.feature.sanpham;
 
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.IgnoreExtraProperties;
 import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.ServerTimestamp;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @IgnoreExtraProperties
 public class Product {
+    private static final Pattern PRODUCT_ID_PATTERN = Pattern.compile("^SP(\\d+)$");
+
     private String id; 
     private String maID; 
     private String tenSP;
@@ -85,4 +92,46 @@ public class Product {
 
     public Date getNgayCapNhat() { return ngayCapNhat; }
     public void setNgayCapNhat(Date ngayCapNhat) { this.ngayCapNhat = ngayCapNhat; }
+
+    public static String buildNextProductId(List<DocumentSnapshot> documents) {
+        long maxNumber = 0;
+        int maxDigits = 3;
+
+        for (DocumentSnapshot document : documents) {
+            String id = document.getId();
+            long number = extractProductIdNumber(id);
+            if (number > maxNumber) {
+                maxNumber = number;
+                if (id.length() > 2) {
+                    maxDigits = Math.max(maxDigits, id.length() - 2);
+                }
+            }
+            
+            String maID = document.getString("maID");
+            if (maID != null) {
+                long maIdNum = extractProductIdNumber(maID);
+                if (maIdNum > maxNumber) {
+                    maxNumber = maIdNum;
+                    if (maID.length() > 2) {
+                        maxDigits = Math.max(maxDigits, maID.length() - 2);
+                    }
+                }
+            }
+        }
+
+        return String.format(Locale.getDefault(), "SP%0" + maxDigits + "d", maxNumber + 1);
+    }
+
+    private static long extractProductIdNumber(String id) {
+        if (id == null) return -1;
+        Matcher matcher = PRODUCT_ID_PATTERN.matcher(id.trim());
+        if (matcher.matches()) {
+            try {
+                return Long.parseLong(matcher.group(1));
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+        }
+        return -1;
+    }
 }

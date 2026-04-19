@@ -36,7 +36,6 @@ public class CreateSupplierActivity extends AppCompatActivity {
         setContentView(R.layout.activity_create_supplier);
 
         db = FirebaseFirestore.getInstance();
-        NhaCungCapRepository.getInstance().ensureCanonicalSchema();
         initViews();
 
         ivBack.setOnClickListener(v -> finish());
