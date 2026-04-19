@@ -15,9 +15,11 @@
     <string name="filter_icon_desc">Lọc</string>
     <string name="batch_manage_title">Quản lý lô hàng</string>
     <string name="filter_all">Tất cả</string>
-    <string name="filter_expiring_soon">Sắp hết hạn</string>
-    <string name="filter_expired">Hết hạn</string>
+    <string name="filter_expiring_soon">Lô sắp hết hạn</string>
+    <string name="filter_expired">Lô hết hạn</string>
     <string name="filter_low_stock">Số lượng thấp</string>
+    <string name="filter_expiry_asc">Sắp xếp lô gần hết hạn</string>
+    <string name="filter_expiry_desc">Sắp xếp lô date xa</string>
     <string name="empty_lo_hang">Không có dữ liệu</string>
     <string name="supplier_search_hint">Tìm kiếm theo mã nhà cung cấp</string>
     <string name="supplier_manage_title">Quản lý nhà cung cấp</string>

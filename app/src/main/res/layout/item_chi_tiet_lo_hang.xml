@@ -11,27 +11,127 @@
         android:layout_height="1dp"
         android:background="@color/light_gray" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="Số lô"
+            android:textColor="@color/text_black"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvSoLo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_black"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="Mã sản phẩm"
+            android:textColor="@color/text_black"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvMaSanPham"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_black"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="Nhà cung cấp"
+            android:textColor="@color/text_black"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvNhaCungCap"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_black"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="Hạn sử dụng"
+            android:textColor="@color/text_black"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvHanSuDung"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_black"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="Ngày sản xuất"
+            android:textColor="@color/text_black"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvNgaySanXuat"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/text_black"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Số lô"
-        android:textColor="@color/text_black"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/tvSoLo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/text_black"
-        android:textSize="12sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Tên hàng"
+        android:text="Tên sản phẩm"
         android:textColor="@color/text_black"
         android:textSize="12sp" />
 

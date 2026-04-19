@@ -12,6 +12,8 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.nhom5.pharma.R;
 import com.nhom5.pharma.feature.nhaphang.NhapHangRepository;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 public class ChiTietLoHangActivity extends AppCompatActivity {
@@ -19,6 +21,10 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
     public static final String EXTRA_SO_LO = "SO_LO";
 
     private TextView tvSoLo;
+    private TextView tvMaSanPham;
+    private TextView tvNhaCungCap;
+    private TextView tvHanSuDung;
+    private TextView tvNgaySanXuat;
     private TextView tvTenHang;
     private TextView tvSoLuong;
     private TextView tvDonGia;
@@ -55,6 +61,10 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         tvSoLo = findViewById(R.id.tvSoLo);
+        tvMaSanPham = findViewById(R.id.tvMaSanPham);
+        tvNhaCungCap = findViewById(R.id.tvNhaCungCap);
+        tvHanSuDung = findViewById(R.id.tvHanSuDung);
+        tvNgaySanXuat = findViewById(R.id.tvNgaySanXuat);
         tvTenHang = findViewById(R.id.tvTenHang);
         tvSoLuong = findViewById(R.id.tvSoLuong);
         tvDonGia = findViewById(R.id.tvDonGia);
@@ -76,14 +86,29 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
     private void bindLoHang(DocumentSnapshot doc) {
         String soLo = doc.getId();
         String maSP = firstNonEmpty(doc, "maSP", "MaSP", "maHang", "MaHang");
+        String maNhapHang = firstNonEmpty(doc, "maNhapHang", "MaNhapHang");
         double soLuong = firstNumber(doc, "soLuong", "SoLuong");
-        double donGiaNhap = firstNumber(doc, "donGiaNhap", "DonGiaNhap", "giaNhap", "GiaNhap");
+        Double donGiaNhapValue = firstNumberNullable(doc, "donGiaNhap", "DonGiaNhap", "giaNhap", "GiaNhap", "donGia", "DonGia");
+        double donGiaNhap = donGiaNhapValue != null ? donGiaNhapValue : 0d;
+        Date hanSuDung = firstDate(doc, "hanSuDung", "HanSuDung", "hansudung");
+        Date ngaySanXuat = firstDate(doc, "ngaySanXuat", "NgaySanXuat", "ngaySX", "NgaySX", "nsx", "NSX");
+
+        syncLegacyLoHangFields(doc, soLo, maSP, maNhapHang, soLuong, donGiaNhap, hanSuDung, ngaySanXuat);
 
         tvSoLo.setText(defaultText(soLo));
+        tvMaSanPham.setText(defaultText(maSP));
+        tvNhaCungCap.setText("-");
+        tvHanSuDung.setText(formatDate(hanSuDung));
+        tvNgaySanXuat.setText(formatDate(ngaySanXuat));
         tvTenHang.setText(defaultText(maSP));
         tvSoLuong.setText(formatNumber(soLuong));
-        tvDonGia.setText(formatMoney(donGiaNhap));
-        tvThanhTien.setText(formatMoney(soLuong * donGiaNhap));
+        tvDonGia.setText(donGiaNhapValue != null ? formatMoney(donGiaNhap) : "-");
+        tvThanhTien.setText(donGiaNhapValue != null ? formatMoney(soLuong * donGiaNhap) : "-");
+
+        // Chuan hoa du lieu cu ve field donGiaNhap de cac man hinh doc dong nhat.
+        if (!doc.contains("donGiaNhap") && donGiaNhapValue != null && donGiaNhap > 0d) {
+            repository.updateLoHangDonGiaNhap(soLo, donGiaNhap);
+        }
 
         if (!TextUtils.isEmpty(maSP)) {
             repository.getProductById(maSP).addOnSuccessListener(productDoc -> {
@@ -92,7 +117,55 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
                     if (!TextUtils.isEmpty(tenSP)) {
                         tvTenHang.setText(tenSP);
                     }
+
+                    if (donGiaNhapValue == null) {
+                        Double donGiaFromProduct = firstNumberNullable(productDoc,
+                                "giaNhap", "GiaNhap", "giavon", "GiaVon", "giaVon", "donGiaNhap", "DonGiaNhap");
+                        if (donGiaFromProduct != null && donGiaFromProduct > 0d) {
+                            tvDonGia.setText(formatMoney(donGiaFromProduct));
+                            tvThanhTien.setText(formatMoney(soLuong * donGiaFromProduct));
+                            repository.updateLoHangDonGiaNhap(soLo, donGiaFromProduct);
+                        }
+                    }
+
+                    if (ngaySanXuat == null) {
+                        Date nsxFromProduct = firstDate(productDoc, "ngaySanXuat", "NgaySanXuat", "ngaySX", "NgaySX", "nsx", "NSX");
+                        tvNgaySanXuat.setText(formatDate(nsxFromProduct));
+                        if (nsxFromProduct != null) {
+                            repository.updateLoHangNgaySanXuat(soLo, nsxFromProduct);
+                        }
+                    }
                 }
+            });
+        }
+
+        if (!TextUtils.isEmpty(maNhapHang)) {
+            repository.getNhapHangById(maNhapHang).addOnSuccessListener(nhapHangDoc -> {
+                if (!nhapHangDoc.exists()) {
+                    return;
+                }
+
+                String maNCC = firstNonEmpty(nhapHangDoc, "maNCC", "MaNCC");
+                if (TextUtils.isEmpty(maNCC)) {
+                    String tenNccLegacy = firstNonEmpty(nhapHangDoc, "tenNhaCungCap", "TenNhaCungCap");
+                    if (!TextUtils.isEmpty(tenNccLegacy)) {
+                        tvNhaCungCap.setText(tenNccLegacy);
+                    }
+                    return;
+                }
+
+                repository.getSupplierById(maNCC).addOnSuccessListener(nccDoc -> {
+                    if (nccDoc.exists()) {
+                        String tenNCC = firstNonEmpty(nccDoc, "tenNCC", "TenNCC");
+                        if (!TextUtils.isEmpty(tenNCC)) {
+                            tvNhaCungCap.setText(String.format(Locale.getDefault(), "%s - %s", maNCC, tenNCC));
+                        } else {
+                            tvNhaCungCap.setText(maNCC);
+                        }
+                    } else {
+                        tvNhaCungCap.setText(maNCC);
+                    }
+                });
             });
         }
     }
@@ -108,6 +181,11 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
     }
 
     private static double firstNumber(DocumentSnapshot snapshot, String... keys) {
+        Double value = firstNumberNullable(snapshot, keys);
+        return value != null ? value : 0d;
+    }
+
+    private static Double firstNumberNullable(DocumentSnapshot snapshot, String... keys) {
         for (String key : keys) {
             Number value = snapshot.getDouble(key);
             if (value != null) {
@@ -117,9 +195,107 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
             if (raw instanceof Number) {
                 return ((Number) raw).doubleValue();
             }
+            if (raw instanceof String) {
+                try {
+                    String normalized = normalizeNumericString((String) raw);
+                    if (!TextUtils.isEmpty(normalized)) {
+                        return Double.parseDouble(normalized);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
         }
-        return 0d;
+        return null;
     }
+
+    private static String normalizeNumericString(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String cleaned = raw.trim()
+                .replace(" ", "")
+                .replace("đ", "")
+                .replace("Đ", "")
+                .replaceAll("[^0-9,.-]", "");
+        if (TextUtils.isEmpty(cleaned)) {
+            return null;
+        }
+
+        int commaCount = 0;
+        for (int i = 0; i < cleaned.length(); i++) {
+            if (cleaned.charAt(i) == ',') {
+                commaCount++;
+            }
+        }
+
+        if (cleaned.contains(",") && cleaned.contains(".")) {
+            // Truong hop 1,234.56 -> bo dau phay ngan cach hang nghin.
+            cleaned = cleaned.replace(",", "");
+        } else if (commaCount > 1) {
+            // Truong hop 1,234,567 -> bo tat ca dau phay.
+            cleaned = cleaned.replace(",", "");
+        } else if (commaCount == 1) {
+            int commaIndex = cleaned.indexOf(',');
+            int tailLength = cleaned.length() - commaIndex - 1;
+            if (tailLength == 3) {
+                // Truong hop 1,234 -> coi la ngan cach hang nghin.
+                cleaned = cleaned.replace(",", "");
+            } else {
+                // Truong hop thap phan kieu VN 12,5 -> doi ve 12.5.
+                cleaned = cleaned.replace(",", ".");
+            }
+        }
+        return cleaned;
+    }
+
+    private static Date firstDate(DocumentSnapshot snapshot, String... keys) {
+        for (String key : keys) {
+            Object raw = snapshot.get(key);
+            if (raw instanceof Date) {
+                return (Date) raw;
+            }
+            if (raw instanceof com.google.firebase.Timestamp) {
+                return ((com.google.firebase.Timestamp) raw).toDate();
+            }
+            if (raw instanceof Number) {
+                return new Date(((Number) raw).longValue());
+            }
+        }
+        return null;
+    }
+
+    private void syncLegacyLoHangFields(DocumentSnapshot doc,
+                                        String soLo,
+                                        String maSP,
+                                        String maNhapHang,
+                                        double soLuong,
+                                        double donGiaNhap,
+                                        Date hanSuDung,
+                                        Date ngaySanXuat) {
+        if (TextUtils.isEmpty(soLo)) {
+            return;
+        }
+
+        boolean needsCanonicalSync = !doc.contains("maSP")
+                || !doc.contains("donGiaNhap")
+                || !doc.contains("ngaySanXuat")
+                || !doc.contains("soLo");
+
+        if (!needsCanonicalSync) {
+            return;
+        }
+
+        com.nhom5.pharma.feature.nhaphang.LoHang canonical = new com.nhom5.pharma.feature.nhaphang.LoHang();
+        canonical.setSoLo(soLo);
+        canonical.setMaSP(maSP);
+        canonical.setMaNhapHang(maNhapHang);
+        canonical.setSoLuong(soLuong);
+        canonical.setDonGiaNhap(donGiaNhap);
+        canonical.setHanSuDung(hanSuDung);
+        canonical.setNgaySanXuat(ngaySanXuat);
+        repository.upsertLoHang(soLo, canonical);
+    }
+
 
     private static String defaultText(String value) {
         return TextUtils.isEmpty(value) ? "-" : value;
@@ -131,6 +307,13 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
 
     private static String formatMoney(double value) {
         return String.format(Locale.getDefault(), "%,.0fđ", value);
+    }
+
+    private static String formatDate(Date value) {
+        if (value == null) {
+            return "-";
+        }
+        return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(value);
     }
 }
 

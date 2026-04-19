@@ -20,11 +20,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.Query;
 import com.nhom5.pharma.R;
 import com.nhom5.pharma.feature.nhaphang.LoHang;
 import com.nhom5.pharma.feature.nhaphang.LoHangAdapter;
 import com.nhom5.pharma.feature.nhaphang.NhapHangRepository;
+
+import java.util.Date;
 
 public class LoHangFragment extends Fragment {
 
@@ -60,7 +63,7 @@ public class LoHangFragment extends Fragment {
     private void setupRecyclerView() {
         Query query = repository.getAllLoHang();
         FirestoreRecyclerOptions<LoHang> options = new FirestoreRecyclerOptions.Builder<LoHang>()
-                .setQuery(query, LoHang.class)
+                .setQuery(query, snapshot -> parseLoHang(snapshot))
                 .build();
 
         adapter = new LoHangAdapter(options, this::updateEmptyState);
@@ -129,7 +132,7 @@ public class LoHangFragment extends Fragment {
         });
 
         int popupWidth = resolveFilterPopupWidth();
-        int xOffset = ivFilter.getWidth() - popupWidth;
+        int xOffset = ivFilter.getWidth() - popupWidth - dpToPx(4);
 
         filterPopupWindow = new PopupWindow(
                 popupView,
@@ -143,17 +146,8 @@ public class LoHangFragment extends Fragment {
     }
 
     private int resolveFilterPopupWidth() {
-        View searchContainer = null;
-        if (ivFilter != null && ivFilter.getParent() instanceof View) {
-            searchContainer = (View) ivFilter.getParent();
-        }
-        if (searchContainer != null && searchContainer.getWidth() > 0) {
-            return searchContainer.getWidth();
-        }
-        if (recyclerViewLoHang != null && recyclerViewLoHang.getWidth() > 0) {
-            return recyclerViewLoHang.getWidth();
-        }
-        return dpToPx(240);
+        // Dropdown gon, can phai theo icon filter.
+        return dpToPx(190);
     }
 
     private int dpToPx(int dp) {
@@ -183,11 +177,67 @@ public class LoHangFragment extends Fragment {
         }
 
         FirestoreRecyclerOptions<LoHang> options = new FirestoreRecyclerOptions.Builder<LoHang>()
-                .setQuery(query, LoHang.class)
+                .setQuery(query, snapshot -> parseLoHang(snapshot))
                 .build();
         adapter.setActiveFilterType(selectedFilter);
         adapter.updateOptions(options);
         updateFilterIconState();
+    }
+
+    private LoHang parseLoHang(com.google.firebase.firestore.DocumentSnapshot snapshot) {
+        LoHang item = new LoHang();
+        String soLo = firstNonEmpty(snapshot, "soLo", "SoLo", "maLo", "MaLo");
+        item.setSoLo(soLo != null ? soLo : snapshot.getId());
+        item.setMaNhapHang(firstNonEmpty(snapshot, "maNhapHang", "MaNhapHang"));
+        item.setMaSP(firstNonEmpty(snapshot, "maSP", "MaSP", "maHang", "MaHang"));
+        item.setSoLuong(firstNumber(snapshot, "soLuong", "SoLuong"));
+        item.setDonGiaNhap(firstNumber(snapshot, "donGiaNhap", "DonGiaNhap", "giaNhap", "GiaNhap"));
+        item.setNgayNhap(firstDate(snapshot, "ngayNhap", "NgayNhap", "ngayTao", "createdAt"));
+        item.setHanSuDung(firstDate(snapshot, "hanSuDung", "HanSuDung", "hansudung"));
+        item.setNgayTao(firstDate(snapshot, "ngayTao", "createdAt", "NgayTao"));
+        return item;
+    }
+
+    private static String firstNonEmpty(com.google.firebase.firestore.DocumentSnapshot snapshot, String... keys) {
+        for (String key : keys) {
+            String value = snapshot.getString(key);
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static double firstNumber(com.google.firebase.firestore.DocumentSnapshot snapshot, String... keys) {
+        for (String key : keys) {
+            Object raw = snapshot.get(key);
+            if (raw instanceof Number) {
+                return ((Number) raw).doubleValue();
+            }
+            if (raw instanceof String) {
+                try {
+                    return Double.parseDouble(((String) raw).trim());
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return 0d;
+    }
+
+    private static Date firstDate(com.google.firebase.firestore.DocumentSnapshot snapshot, String... keys) {
+        for (String key : keys) {
+            Object raw = snapshot.get(key);
+            if (raw instanceof Date) {
+                return (Date) raw;
+            }
+            if (raw instanceof Timestamp) {
+                return ((Timestamp) raw).toDate();
+            }
+            if (raw instanceof Number) {
+                return new Date(((Number) raw).longValue());
+            }
+        }
+        return null;
     }
 
     private int getRadioIdForFilter(int filterType) {
@@ -198,6 +248,10 @@ public class LoHangFragment extends Fragment {
                 return R.id.rbExpired;
             case LoHangFilterType.LOW_STOCK:
                 return R.id.rbLowStock;
+            case LoHangFilterType.EXPIRY_ASC:
+                return R.id.rbExpiryAsc;
+            case LoHangFilterType.EXPIRY_DESC:
+                return R.id.rbExpiryDesc;
             case LoHangFilterType.ALL:
             default:
                 return R.id.rbAll;
@@ -213,6 +267,12 @@ public class LoHangFragment extends Fragment {
         }
         if (radioId == R.id.rbLowStock) {
             return LoHangFilterType.LOW_STOCK;
+        }
+        if (radioId == R.id.rbExpiryAsc) {
+            return LoHangFilterType.EXPIRY_ASC;
+        }
+        if (radioId == R.id.rbExpiryDesc) {
+            return LoHangFilterType.EXPIRY_DESC;
         }
         return LoHangFilterType.ALL;
     }

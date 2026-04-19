@@ -30,6 +30,9 @@ import com.google.firebase.firestore.Query;
 import com.nhom5.pharma.R;
 import com.nhom5.pharma.util.FirestoreValueParser;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
@@ -37,6 +40,8 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
 
     private TextView tvOrderCodeTitle, tvTrangThaiHeader, tvNguoiNhap, tvNgayNhapMeta, tvTenNhaCungCap;
     private LinearLayout llChiTiet;
+    private final List<LoHang> currentLoHangs = new ArrayList<>();
+    private boolean isLoHangLoaded = false;
     private String nhapHangId;
     private NhapHangRepository repository;
 
@@ -70,7 +75,8 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
         llChiTiet = findViewById(R.id.llChiTiet);
 
         findViewById(R.id.btnXoa).setOnClickListener(v -> showDeleteConfirmationDialog());
-        findViewById(R.id.btnLuu).setOnClickListener(v -> finish());
+        findViewById(R.id.btnLuu).setEnabled(false);
+        findViewById(R.id.btnLuu).setOnClickListener(v -> syncLoHangToFirebase());
     }
 
     private void showDeleteConfirmationDialog() {
@@ -174,25 +180,45 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
     private void fetchLoHangList(String id) {
         if (llChiTiet == null) return;
         llChiTiet.removeAllViews();
+        currentLoHangs.clear();
+        isLoHangLoaded = false;
         repository.getLoHangByNhapHangId(id).addOnSuccessListener(snapshot -> {
             if (isFinishing() || isDestroyed()) return;
             for (DocumentSnapshot doc : snapshot) {
+                String soLoDoc = doc.getId();
+                String maSpValue = firstNonEmpty(doc, "maSP", "MaSP", "maHang", "MaHang");
+                double soLuongValue = firstNumber(doc, "soLuong", "SoLuong");
+                double donGiaValue = firstNumber(doc, "donGiaNhap", "DonGiaNhap", "giaNhap", "GiaNhap", "donGia", "DonGia");
+
+                LoHang loHang = new LoHang();
+                loHang.setSoLo(soLoDoc);
+                loHang.setMaNhapHang(firstNonEmpty(doc, "maNhapHang", "MaNhapHang"));
+                loHang.setMaSP(maSpValue);
+                loHang.setSoLuong(soLuongValue);
+                loHang.setDonGiaNhap(donGiaValue);
+                loHang.setNgayNhap(firstDate(doc, "ngayNhap", "NgayNhap", "ngayTao", "createdAt"));
+                loHang.setHanSuDung(firstDate(doc, "hanSuDung", "HanSuDung", "hansudung"));
+                loHang.setNgaySanXuat(firstDate(doc, "ngaySanXuat", "NgaySanXuat", "ngaySX", "NgaySX", "nsx", "NSX"));
+                loHang.setNgayTao(firstDate(doc, "ngayTao", "createdAt", "NgayTao"));
+                currentLoHangs.add(loHang);
+
+                syncLegacyLoHangFields(doc, loHang);
+
                 View itemView = LayoutInflater.from(this).inflate(R.layout.item_chi_tiet_lo_hang, llChiTiet, false);
-                ((TextView)itemView.findViewById(R.id.tvSoLo)).setText(doc.getId());
-                
+                ((TextView)itemView.findViewById(R.id.tvSoLo)).setText(soLoDoc);
+
                 Double sl = FirestoreValueParser.safeDouble(FirestoreValueParser.safeRaw(doc, "soLuong"));
                 Double dg = FirestoreValueParser.safeDouble(FirestoreValueParser.safeRaw(doc, "donGiaNhap"));
-                
-                double soLuong = sl != null ? sl : 0;
-                double donGia = dg != null ? dg : 0;
+
+                double soLuong = sl != null ? sl : soLuongValue;
+                double donGia = dg != null ? dg : donGiaValue;
                 
                 ((TextView)itemView.findViewById(R.id.tvSoLuong)).setText(String.format(Locale.getDefault(), "%,.0f", soLuong));
                 ((TextView)itemView.findViewById(R.id.tvDonGia)).setText(String.format(Locale.getDefault(), "%,.0fđ", donGia));
                 ((TextView)itemView.findViewById(R.id.tvThanhTien)).setText(String.format(Locale.getDefault(), "%,.0fđ", soLuong * donGia));
                 
-                String maSP = doc.getString("maSP");
-                if (maSP != null) {
-                    repository.getProductById(maSP).addOnSuccessListener(spDoc -> {
+                if (maSpValue != null) {
+                    repository.getProductById(maSpValue).addOnSuccessListener(spDoc -> {
                         if (isFinishing() || isDestroyed()) return;
                         if (spDoc.exists()) {
                             String tenSP = FirestoreValueParser.safeString(spDoc, "tenSP");
@@ -203,93 +229,86 @@ public class ChiTietNhapHangActivity extends AppCompatActivity {
                 }
                 llChiTiet.addView(itemView);
             }
+            isLoHangLoaded = true;
+            findViewById(R.id.btnLuu).setEnabled(true);
+        }).addOnFailureListener(e -> {
+            isLoHangLoaded = false;
+            findViewById(R.id.btnLuu).setEnabled(false);
+            Toast.makeText(this, "Khong tai duoc lo hang: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
 
-    public static class NhapHangFragment extends Fragment {
-
-        private RecyclerView recyclerViewNhapHang;
-        private EditText searchEditText;
-        private NhapHangAdapter adapter;
-        private final NhapHangRepository repository = NhapHangRepository.getInstance();
-
-        public NhapHangFragment() {}
-
-        @Override
-        public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View view = inflater.inflate(R.layout.fragment_nhap_hang, container, false);
-
-            recyclerViewNhapHang = view.findViewById(R.id.recyclerViewNhapHang);
-
-            View searchBarContainer = view.findViewById(R.id.search_bar);
-            searchEditText = view.findViewById(R.id.searchEditText);
-            if (searchEditText == null && searchBarContainer != null) {
-                searchEditText = searchBarContainer.findViewById(R.id.searchEditText);
-            }
-
-            ImageButton btnAddNew = view.findViewById(R.id.btnAddNew);
-            if (btnAddNew == null && searchBarContainer != null) {
-                btnAddNew = searchBarContainer.findViewById(R.id.btnAddNew);
-            }
-
-            setupRecyclerView();
-            setupSearchFunctionality();
-
-            if (btnAddNew != null) {
-                btnAddNew.setOnClickListener(v -> {
-                    try {
-                        startActivity(new Intent(requireActivity(), TaoDonNhapActivity.class));
-                    } catch (Exception e) {
-                        Toast.makeText(requireContext(), "Không mở được màn tạo đơn nhập", Toast.LENGTH_SHORT).show();
-                        Log.e("NhapHangFragment", "Open TaoDonNhapActivity failed", e);
-                    }
-                });
-            }
-
-            return view;
+    private void syncLegacyLoHangFields(DocumentSnapshot doc, LoHang loHang) {
+        String soLo = loHang.getSoLo();
+        if (soLo == null || soLo.trim().isEmpty()) {
+            return;
         }
 
-        private void setupRecyclerView() {
-            Query query = repository.getAllNhapHang();
-            FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
-                    .setQuery(query, NhapHang.class)
-                    .build();
+        boolean needsCanonicalSync = !doc.contains("maSP")
+                || !doc.contains("donGiaNhap")
+                || !doc.contains("ngaySanXuat")
+                || !doc.contains("soLo");
 
-            adapter = new NhapHangAdapter(options);
+        if (needsCanonicalSync) {
+            repository.upsertLoHang(soLo, loHang);
+        }
+    }
 
-            recyclerViewNhapHang.setLayoutManager(new LinearLayoutManager(getContext()) {
-                @Override
-                public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
-                    try {
-                        super.onLayoutChildren(recycler, state);
-                    } catch (IndexOutOfBoundsException e) {
-                        Log.e("RecyclerView", "Chặn lỗi văng app");
-                    }
+    private void syncLoHangToFirebase() {
+        if (nhapHangId == null) {
+            return;
+        }
+
+        if (!isLoHangLoaded) {
+            Toast.makeText(this, "Du lieu lo hang chua tai xong, vui long thu lai", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        repository.replaceLoHangByNhapHangId(nhapHangId, currentLoHangs)
+                .addOnSuccessListener(unused -> Toast.makeText(this, "Đã đồng bộ lô hàng lên Firebase", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Đồng bộ thất bại: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private static String firstNonEmpty(DocumentSnapshot snapshot, String... keys) {
+        for (String key : keys) {
+            String value = snapshot.getString(key);
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static double firstNumber(DocumentSnapshot snapshot, String... keys) {
+        for (String key : keys) {
+            Double value = snapshot.getDouble(key);
+            if (value != null) {
+                return value;
+            }
+            Object raw = snapshot.get(key);
+            if (raw instanceof Number) {
+                return ((Number) raw).doubleValue();
+            }
+            if (raw instanceof String) {
+                try {
+                    return Double.parseDouble(((String) raw).trim());
+                } catch (NumberFormatException ignored) {
                 }
-            });
-
-            recyclerViewNhapHang.setAdapter(adapter);
-        }
-
-        private void setupSearchFunctionality() {
-            if (searchEditText != null) {
-                searchEditText.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void onTextChanged(CharSequence s, int start, int before, int count) {
-                        Query query = repository.searchByMaDon(s.toString().toUpperCase());
-
-                        FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
-                                .setQuery(query, NhapHang.class)
-                                .build();
-                        adapter.updateOptions(options);
-                    }
-                    @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                    @Override public void afterTextChanged(Editable s) {}
-                });
             }
         }
+        return 0d;
+    }
 
-        @Override public void onStart() { super.onStart(); if (adapter != null) adapter.startListening(); }
-        @Override public void onStop() { super.onStop(); if (adapter != null) adapter.stopListening(); }
+    private static Date firstDate(DocumentSnapshot snapshot, String... keys) {
+        for (String key : keys) {
+            Object raw = snapshot.get(key);
+            if (raw instanceof Date) {
+                return (Date) raw;
+            }
+            if (raw instanceof com.google.firebase.Timestamp) {
+                return ((com.google.firebase.Timestamp) raw).toDate();
+            }
+        }
+        return null;
     }
 }
