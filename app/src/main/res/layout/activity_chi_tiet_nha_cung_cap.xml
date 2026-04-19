@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
+    <!-- Header -->
     <RelativeLayout
         android:id="@+id/header"
         android:layout_width="match_parent"
@@ -16,6 +17,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_centerVertical="true"
+            android:layout_marginStart="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_back"
             app:tint="#333333" />
@@ -39,11 +41,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp"
-            android:paddingBottom="40dp"
-            android:clipToPadding="false">
+            android:padding="16dp">
 
-            <!-- Card 1 -->
+            <!-- Card 1: Logo & Info -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -53,19 +53,24 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="24dp" android:gravity="center_vertical">
                     <ImageView android:id="@+id/imgLogo" android:layout_width="70dp" android:layout_height="70dp" android:src="@drawable/ic_supplier_logo" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="20dp" android:orientation="vertical">
-                        <TextView android:id="@+id/tvDetailTenNCC" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Công ty Zulic Pharma" android:textColor="#000000" android:textSize="18sp" android:textStyle="bold" />
-                        <TextView android:id="@+id/tvDetailMaNCC" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Mã NCC: NCC0001" android:textColor="#666666" />
+                        <TextView android:id="@+id/tvTenHeader" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Công ty Zulic Pharma" android:textColor="#000000" android:textSize="18sp" android:textStyle="bold" />
+                        <TextView android:id="@+id/tvMaHeader" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Mã NCC: NCC0001" android:textColor="#666666" />
                         <TextView android:id="@+id/tvDetailMST" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Mã số thuế: 0312345678" android:textColor="#666666" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Card 2 -->
+            <!-- Card 2: Contact Info -->
             <androidx.cardview.widget.CardView
-                android:layout_width="match_parent" android:layout_height="wrap_content" app:cardCornerRadius="24dp" app:cardElevation="1dp" app:cardUseCompatPadding="true">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="1dp"
+                app:cardUseCompatPadding="true">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Thông tin cơ bản" android:textStyle="bold" android:textColor="#000000" android:textSize="16sp"/>
-                    <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp">
+                    <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Điện thoại:" android:textColor="#666666" />
                         <TextView android:id="@+id/tvDetailSDT" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:text="0789892167" android:textColor="#000000" />
                     </RelativeLayout>
@@ -73,16 +78,21 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Email:" android:textColor="#666666" />
                         <TextView android:id="@+id/tvDetailEmail" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:text="nt1@gmail.com" android:textColor="#000000" />
                     </RelativeLayout>
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Địa chỉ:" android:textColor="#666666" />
-                        <TextView android:id="@+id/tvDetailDiaChi" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="end" android:text="86 Lê Thánh Tôn, Quận 1, TP. HCM" android:textColor="#000000" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Địa chỉ: " android:textColor="#666666" />
+                        <TextView android:id="@+id/tvDetailDiaChi" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:gravity="end" android:text="86 Lê Thánh Tôn, Quận 1, TP. HCM" android:textColor="#000000" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Card 3 -->
+            <!-- Card 3: Stats -->
             <androidx.cardview.widget.CardView
-                android:layout_width="match_parent" android:layout_height="wrap_content" app:cardCornerRadius="24dp" app:cardElevation="1dp" app:cardUseCompatPadding="true">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="1dp"
+                app:cardUseCompatPadding="true">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Thống kê" android:textStyle="bold" android:textColor="#000000" android:textSize="16sp"/>
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp">
@@ -104,7 +114,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center"
-                android:layout_marginTop="32dp">
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="40dp">
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDelete"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -117,8 +128,9 @@
                     app:cornerRadius="12dp"
                     app:icon="@drawable/ic_delete"
                     app:iconTint="#333333"
-                    android:layout_marginEnd="20dp"
-                    app:strokeColor="#DDDDDD" />
+                    android:layout_marginEnd="16dp"
+                    app:strokeColor="#DDDDDD"
+                    app:strokeWidth="1dp" />
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnEdit"
                     android:layout_width="wrap_content"

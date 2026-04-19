@@ -38,17 +38,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+<<<<<<< HEAD
         
         // Tạm thời bỏ qua đăng nhập để làm Nhà cung cấp
         /*
         mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() == null) {
+=======
+        mAuth = FirebaseAuth.getInstance();
+        // TODO: Bỏ comment lại khi phát triển xong
+        /*if (mAuth.getCurrentUser() == null) {
+>>>>>>> f6626e1bd9cc4d313d85fe4f8056470d2969e674
             Intent intent = new Intent(this, DangNhapActivity.class);
             startActivity(intent);
             finish();
             return;
-        }
-        */
+        }*/
 
         setContentView(R.layout.activity_main);
 
@@ -79,8 +84,16 @@ public class MainActivity extends AppCompatActivity {
         tabSuppliers.setOnClickListener(v -> selectTab(TAB_SUPPLIERS));
         tabManage.setOnClickListener(v -> selectTab(TAB_MANAGE));
 
+<<<<<<< HEAD
         // CHUYỂN VỀ TAB NHÀ CUNG CẤP LÀM MẶC ĐỊNH
         selectTab(TAB_SUPPLIERS);
+=======
+        if (getIntent().getBooleanExtra("SELECT_MODE", false)) {
+            selectTab(TAB_PRODUCTS);
+        } else {
+            selectTab(TAB_SUPPLIERS);  // TODO: Thay đổi thành TAB_ORDERS khi phát triển xong
+        }
+>>>>>>> f6626e1bd9cc4d313d85fe4f8056470d2969e674
     }
 
     private void selectTab(int index) {

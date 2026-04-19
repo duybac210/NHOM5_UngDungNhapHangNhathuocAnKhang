@@ -133,21 +133,27 @@ public class DangNhapFragment extends Fragment {
         mAuth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    Toast.makeText(getContext(), "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+                    }
                     navigateToMain();
                 } else {
                     btnLogin.setEnabled(true);
                     btnLogin.setText("Tiếp tục");
-                    Toast.makeText(getContext(), "Lỗi: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    String message = task.getException() != null ? task.getException().getMessage() : "Đăng nhập thất bại";
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Lỗi: " + message, Toast.LENGTH_LONG).show();
+                    }
                 }
             });
     }
 
     private void navigateToMain() {
+        if (getActivity() == null) {
+            return;
+        }
         Intent intent = new Intent(getActivity(), MainActivity.class);
         startActivity(intent);
-        if (getActivity() != null) {
-            getActivity().finish();
-        }
+        getActivity().finish();
     }
 }

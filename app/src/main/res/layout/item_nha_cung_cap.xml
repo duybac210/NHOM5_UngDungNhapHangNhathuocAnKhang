@@ -1,58 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="40dp"
     android:orientation="horizontal"
-    android:paddingTop="12dp"
-    android:paddingBottom="12dp"
     android:gravity="center_vertical"
-    android:background="?attr/selectableItemBackground">
+    android:background="?attr/selectableItemBackground"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
 
     <TextView
         android:id="@+id/tvMaNCC"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1.2"
-        android:text="NCC0001"
+        android:fontFamily="sans-serif"
+        android:textColor="#000000"
+        android:textSize="14sp"
         android:gravity="center"
-        android:textSize="12sp"
-        android:textColor="#333333" />
+        android:maxLines="1" />
 
     <TextView
         android:id="@+id/tvTenNCC"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="2"
-        android:text="Công ty Zulic Pharma"
-        android:textSize="12sp"
-        android:textColor="#333333" />
+        android:fontFamily="sans-serif"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
     <TextView
         android:id="@+id/tvSDT"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1.5"
-        android:text="0789892167"
-        android:textSize="12sp"
-        android:textColor="#333333" />
+        android:fontFamily="sans-serif"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:maxLines="1" />
 
     <TextView
         android:id="@+id/tvEmail"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1.5"
-        android:text="nt1@gmail.com"
-        android:textSize="12sp"
+        android:fontFamily="sans-serif"
+        android:textColor="#000000"
+        android:textSize="14sp"
         android:maxLines="1"
-        android:ellipsize="end"
-        android:textColor="#333333" />
+        android:ellipsize="end" />
 
     <TextView
         android:id="@+id/tvTongMua"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1.2"
-        android:text="1.200.000"
-        android:textSize="12sp"
-        android:textColor="#333333" />
+        android:fontFamily="sans-serif"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:maxLines="1" />
 </LinearLayout>

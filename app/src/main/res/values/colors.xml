@@ -28,7 +28,7 @@
     <!-- Border Colors -->
     <color name="border_light">#e2e8f0</color>
     <color name="detail_panel_border">#80000000</color>
-    <color name="field_border">#434343</color>
+    <color name="field_border">#BCB2B2</color>
     <color name="button_save_blue">#0070f4</color>
     <color name="action_bar_border">#0D000000</color>
     <color name="row_selected_blue">#58a4d4</color>

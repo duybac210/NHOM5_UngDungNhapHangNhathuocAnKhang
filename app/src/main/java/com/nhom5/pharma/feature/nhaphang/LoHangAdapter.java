@@ -17,6 +17,7 @@ import com.google.firebase.Timestamp;
 import com.nhom5.pharma.R;
 import com.nhom5.pharma.feature.lohang.ChiTietLoHangActivity;
 import com.nhom5.pharma.feature.lohang.LoHangFilterType;
+import com.nhom5.pharma.util.FirestoreValueParser;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -86,6 +87,7 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
         holder.tvMaHang.setText(defaultText(maHang));
         holder.tvNgayNhap.setText(formatDate(ngayNhap));
         holder.tvSoLuong.setText(String.format(Locale.getDefault(), "%,.0f", soLuong));
+        holder.tvSoNgayConLai.setText(soNgayConLai == Long.MIN_VALUE ? "-" : String.valueOf(soNgayConLai));
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ChiTietLoHangActivity.class);
@@ -119,13 +121,9 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
 
     private static double firstNumber(DocumentSnapshot snapshot, double fallback, String... keys) {
         for (String key : keys) {
-            Number value = snapshot.getDouble(key);
+            Double value = FirestoreValueParser.safeDouble(FirestoreValueParser.safeRaw(snapshot, key));
             if (value != null) {
-                return value.doubleValue();
-            }
-            Object raw = snapshot.get(key);
-            if (raw instanceof Number) {
-                return ((Number) raw).doubleValue();
+                return value;
             }
         }
         return fallback;
@@ -246,6 +244,7 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
         TextView tvMaHang;
         TextView tvNgayNhap;
         TextView tvSoLuong;
+        TextView tvSoNgayConLai;
 
         public LoHangViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -254,6 +253,7 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
             tvMaHang = itemView.findViewById(R.id.tvMaHang);
             tvNgayNhap = itemView.findViewById(R.id.tvNgayNhap);
             tvSoLuong = itemView.findViewById(R.id.tvSoLuong);
+            tvSoNgayConLai = itemView.findViewById(R.id.tvSoNgayConLai);
         }
     }
 }

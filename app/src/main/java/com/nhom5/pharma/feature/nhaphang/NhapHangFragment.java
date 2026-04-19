@@ -5,12 +5,12 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.widget.Toast;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -25,7 +25,6 @@ public class NhapHangFragment extends Fragment {
 
     private RecyclerView recyclerViewNhapHang;
     private EditText searchEditText;
-    private ImageButton btnAddNew;
     private NhapHangAdapter adapter;
     private final NhapHangRepository repository = NhapHangRepository.getInstance();
 
@@ -34,22 +33,34 @@ public class NhapHangFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_nhap_hang, container, false);
-        
-        // Ánh xạ từ layout fragment và include layout
+
         recyclerViewNhapHang = view.findViewById(R.id.recyclerViewNhapHang);
+
+        View searchBarContainer = view.findViewById(R.id.search_bar);
         searchEditText = view.findViewById(R.id.searchEditText);
-        btnAddNew = view.findViewById(R.id.btnAddNew);
+        if (searchEditText == null && searchBarContainer != null) {
+            searchEditText = searchBarContainer.findViewById(R.id.searchEditText);
+        }
+
+        ImageButton btnAddNew = view.findViewById(R.id.btnAddNew);
+        if (btnAddNew == null && searchBarContainer != null) {
+            btnAddNew = searchBarContainer.findViewById(R.id.btnAddNew);
+        }
 
         setupRecyclerView();
         setupSearchFunctionality();
-        
+
         if (btnAddNew != null) {
             btnAddNew.setOnClickListener(v -> {
-                // Giả định bạn có màn hình thêm mới, nếu chưa có tôi hiện Toast demo
-                Toast.makeText(getContext(), "Mở màn hình tạo đơn nhập hàng mới", Toast.LENGTH_SHORT).show();
-                // Intent intent = new Intent(getActivity(), TaoNhapHangActivity.class);
-                // startActivity(intent);
+                try {
+                    startActivity(new Intent(requireActivity(), TaoDonNhapActivity.class));
+                } catch (Exception e) {
+                    Toast.makeText(requireContext(), "Không mở được màn tạo đơn nhập", Toast.LENGTH_SHORT).show();
+                    Log.e("NhapHangFragment", "Open TaoDonNhapActivity failed", e);
+                }
             });
+        } else {
+            Log.w("NhapHangFragment", "Không tìm thấy nút thêm mới");
         }
 
         return view;
@@ -58,7 +69,7 @@ public class NhapHangFragment extends Fragment {
     private void setupRecyclerView() {
         Query query = repository.getAllNhapHang();
         FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
-                .setQuery(query, NhapHang::fromDocument)
+                .setQuery(query, NhapHang.class)
                 .build();
 
         adapter = new NhapHangAdapter(options);
@@ -85,7 +96,7 @@ public class NhapHangFragment extends Fragment {
                     Query query = repository.searchByMaDon(s.toString().toUpperCase());
 
                     FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
-                            .setQuery(query, NhapHang::fromDocument)
+                            .setQuery(query, NhapHang.class)
                             .build();
                     adapter.updateOptions(options);
                 }

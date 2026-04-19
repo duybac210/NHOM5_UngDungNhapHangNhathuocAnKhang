@@ -19,6 +19,7 @@ public class NhaCungCapAdapter extends FirestoreRecyclerAdapter<NhaCungCap, NhaC
 
     @Override
     protected void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull NhaCungCap model) {
+<<<<<<< HEAD
         // model.getId() lúc này sẽ tự động lấy Document ID (ví dụ NCC0002)
         holder.tvMaNCC.setText(model.getId() != null ? model.getId() : "N/A"); 
         holder.tvTenNCC.setText(model.getTenNCC() != null ? model.getTenNCC() : "Chưa có tên");
@@ -27,6 +28,19 @@ public class NhaCungCapAdapter extends FirestoreRecyclerAdapter<NhaCungCap, NhaC
         
         // Sửa lỗi gọi hàm: Dùng fetchDisplayGiaTri() đã được đổi tên trong Model
         holder.tvTongMua.setText(model.fetchDisplayGiaTri());
+=======
+        // Kiểm tra an toàn: Nếu Document ID trống
+        String id = model.getId();
+        holder.tvMaNCC.setText(id != null ? id : "N/A"); 
+        
+        // Kiểm tra an toàn: Nếu các trường dữ liệu bị null trên Firestore
+        holder.tvTenNCC.setText(model.getTenNCC() != null ? model.getTenNCC() : "Chưa có tên");
+        holder.tvSDT.setText(model.getSdt() != null ? model.getSdt() : "---"); 
+        holder.tvEmail.setText(model.getEmail() != null ? model.getEmail() : "---");
+        
+        // Lấy Tổng mua thông qua hàm xử lý thông minh đã viết trong Model
+        holder.tvTongMua.setText(model.getDisplayGiaTri());
+>>>>>>> f6626e1bd9cc4d313d85fe4f8056470d2969e674
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
