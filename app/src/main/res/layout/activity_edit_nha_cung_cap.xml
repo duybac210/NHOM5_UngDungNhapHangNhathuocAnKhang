@@ -68,18 +68,18 @@
                 app:cardElevation="1dp"
                 app:cardUseCompatPadding="true">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Thông tin cơ bản" android:textStyle="bold" android:textColor="#000000" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Thông tin cơ bản" android:textStyle="bold" android:textColor="#000000" android:textSize="16sp"/>
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:gravity="center_vertical">
-                        <TextView android:layout_width="90dp" android:layout_height="wrap_content" android:text="Điện thoại:" />
+                        <TextView android:layout_width="90dp" android:layout_height="wrap_content" android:text="Điện thoại:" android:textColor="#666666" />
                         <EditText android:id="@+id/edtEditSDT" android:layout_width="match_parent" android:layout_height="44dp" android:background="@drawable/bg_search_box" android:paddingStart="16dp" android:inputType="phone" android:textSize="14sp" />
                     </LinearLayout>
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:gravity="center_vertical">
-                        <TextView android:layout_width="90dp" android:layout_height="wrap_content" android:text="Email:" />
+                        <TextView android:layout_width="90dp" android:layout_height="wrap_content" android:text="Email:" android:textColor="#666666" />
                         <EditText android:id="@+id/edtEditEmail" android:layout_width="match_parent" android:layout_height="44dp" android:background="@drawable/bg_search_box" android:paddingStart="16dp" android:inputType="textEmailAddress" android:textSize="14sp" />
                     </LinearLayout>
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:gravity="center_vertical">
-                        <TextView android:layout_width="90dp" android:layout_height="wrap_content" android:text="Địa chỉ:" />
-                        <EditText android:id="@+id/edtEditDiaChi" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:background="@drawable/bg_search_box" android:padding="12dp" android:textSize="14sp" />
+                        <TextView android:layout_width="90dp" android:layout_height="wrap_content" android:text="Địa chỉ:" android:textColor="#666666" />
+                        <EditText android:id="@+id/edtEditDiaChi" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:background="@drawable/bg_search_box" android:padding="12dp" android:textSize="14sp" android:inputType="textMultiLine|textLongMessage" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -93,21 +93,21 @@
                 app:cardElevation="1dp"
                 app:cardUseCompatPadding="true">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Thống kê" android:textStyle="bold" android:textColor="#000000" />
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Thống kê" android:textStyle="bold" android:textColor="#000000" android:textSize="16sp"/>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp">
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tổng số đơn" />
-                            <TextView android:id="@+id/tvEditTongDon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="12" android:textStyle="bold" android:textColor="#000000" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tổng số đơn" android:textColor="#666666" />
+                            <TextView android:id="@+id/tvEditTongDon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="12" android:textStyle="bold" android:textColor="#000000" android:layout_marginTop="8dp" android:textSize="16sp"/>
                         </LinearLayout>
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Giá trị nhập" />
-                            <TextView android:id="@+id/tvEditGiaTri" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="1.220.000" android:textStyle="bold" android:textColor="#000000" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Giá trị nhập" android:textColor="#666666" />
+                            <TextView android:id="@+id/tvEditGiaTri" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1.220.000" android:textStyle="bold" android:textColor="#000000" android:layout_marginTop="8dp" android:textSize="16sp"/>
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- CỤM NÚT: NẰM Ở GIỮA (DƯỚI CARD THỐNG KÊ) -->
+            <!-- CỤM NÚT -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -117,23 +117,28 @@
                 android:layout_marginBottom="40dp">
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCancelEdit"
-                    android:layout_width="110dp"
-                    android:layout_height="52dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
                     android:text="Hủy"
                     android:textAllCaps="false"
-                    app:backgroundTint="#FF0000"
-                    app:cornerRadius="26dp"
-                    android:layout_marginEnd="20dp" />
+                    android:textColor="#333333"
+                    app:backgroundTint="#FFFFFF"
+                    app:cornerRadius="12dp"
+                    android:layout_marginEnd="16dp"
+                    app:strokeColor="#DDDDDD"
+                    app:strokeWidth="1dp" />
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSaveEdit"
                     android:layout_width="wrap_content"
-                    android:layout_height="52dp"
+                    android:layout_height="48dp"
                     android:paddingStart="24dp"
                     android:paddingEnd="24dp"
                     android:text="Lưu thay đổi"
                     android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
                     app:backgroundTint="#5cc849"
-                    app:cornerRadius="26dp" />
+                    app:cornerRadius="24dp" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

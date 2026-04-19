@@ -21,9 +21,12 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
     private NhaCungCapRepository repository;
     private String nccId;
 
+    // View cho màn hình chi tiết
     private TextView tvTen, tvMa, tvMST, tvSDT, tvEmail, tvDiaChi, tvGiaTri, tvTongDon;
+    
+    // View cho màn hình chỉnh sửa
     private EditText edtSDT, edtEmail, edtDiaChi, edtMaNCC, edtMST;
-    private TextView tvEditTen;
+    private TextView tvEditTen, tvEditTongDon, tvEditGiaTri;
     
     private boolean isEditMode = false;
 
@@ -152,6 +155,10 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         edtSDT = findViewById(R.id.edtEditSDT);
         edtEmail = findViewById(R.id.edtEditEmail);
         edtDiaChi = findViewById(R.id.edtEditDiaChi);
+        
+        // Ánh xạ thêm 2 view thống kê ở màn hình sửa
+        tvEditTongDon = findViewById(R.id.tvEditTongDon);
+        tvEditGiaTri = findViewById(R.id.tvEditGiaTri);
     }
 
     private void bindDataToEdit() {
@@ -162,6 +169,10 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         if (edtSDT != null) edtSDT.setText(ncc.getSdt() != null ? String.valueOf(ncc.getSdt()) : "");
         if (edtEmail != null) edtEmail.setText(ncc.getEmail() != null ? ncc.getEmail() : "");
         if (edtDiaChi != null) edtDiaChi.setText(ncc.getDiaChi() != null ? ncc.getDiaChi() : "");
+        
+        // Đồng bộ dữ liệu thống kê sang màn hình sửa
+        if (tvEditTongDon != null) tvEditTongDon.setText(ncc.fetchDisplayTongDon());
+        if (tvEditGiaTri != null) tvEditGiaTri.setText(ncc.fetchDisplayGiaTri());
     }
 
     private void saveChanges() {
