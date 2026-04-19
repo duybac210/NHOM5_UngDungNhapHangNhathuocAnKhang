@@ -18,7 +18,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.Query;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.nhom5.pharma.R;
 
 import java.util.Date;
@@ -27,7 +26,7 @@ public class NhapHangFragment extends Fragment {
 
     private RecyclerView recyclerViewNhapHang;
     private EditText searchEditText;
-    private FloatingActionButton fabAdd;
+    private View btnAddNew;
     private NhapHangAdapter adapter;
     private final NhapHangRepository repository = NhapHangRepository.getInstance();
 
@@ -38,7 +37,7 @@ public class NhapHangFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_nhap_hang, container, false);
         recyclerViewNhapHang = view.findViewById(R.id.recyclerViewNhapHang);
         searchEditText = view.findViewById(R.id.searchEditText);
-        fabAdd = view.findViewById(R.id.fabAdd);
+        btnAddNew = view.findViewById(R.id.btnAddNew);
 
         setupRecyclerView();
         setupSearchFunctionality();
@@ -47,19 +46,19 @@ public class NhapHangFragment extends Fragment {
     }
 
     private void setupCreateSampleSync() {
-        if (fabAdd == null) {
+        if (btnAddNew == null) {
             return;
         }
 
-        fabAdd.setOnClickListener(v -> repository.createSampleNhapHangWithLoHang()
-                .addOnSuccessListener(unused -> Toast.makeText(getContext(), "Da tao va dong bo du lieu mau len Firebase", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Loi dong bo: " + e.getMessage(), Toast.LENGTH_SHORT).show()));
+        btnAddNew.setOnClickListener(v -> repository.createSampleNhapHangWithLoHang()
+                .addOnSuccessListener(unused -> Toast.makeText(getContext(), "Đã tạo và đồng bộ dữ liệu mẫu lên Firebase", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(getContext(), "Lỗi đồng bộ: " + e.getMessage(), Toast.LENGTH_SHORT).show()));
     }
 
     private void setupRecyclerView() {
         Query query = repository.getAllNhapHang();
         FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
-                .setQuery(query, snapshot -> parseNhapHang(snapshot))
+                .setQuery(query, this::parseNhapHang)
                 .build();
 
         adapter = new NhapHangAdapter(options);
@@ -86,7 +85,7 @@ public class NhapHangFragment extends Fragment {
                     Query query = repository.searchByMaDon(s.toString().toUpperCase());
 
                     FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
-                            .setQuery(query, snapshot -> parseNhapHang(snapshot))
+                            .setQuery(query, NhapHangFragment.this::parseNhapHang)
                             .build();
                     adapter.updateOptions(options);
                 }
@@ -99,14 +98,15 @@ public class NhapHangFragment extends Fragment {
     private NhapHang parseNhapHang(com.google.firebase.firestore.DocumentSnapshot snapshot) {
         NhapHang item = new NhapHang();
         item.setId(snapshot.getId());
-        item.setMaNCC(firstNonEmpty(snapshot, "maNCC", "MaNCC"));
+        item.setMaNCC(firstNonEmpty(snapshot, "maNCC", "MaNCC", "maNhaCungCap"));
         item.setMaNguoiNhap(firstNonEmpty(snapshot, "maNguoiNhap", "MaNguoiNhap"));
-        item.setTrangThai(firstBoolean(snapshot, "trangThai", "TrangThai"));
+        item.setTrangThai(snapshot.get("trangThai"));
         item.setTongTien(firstNumber(snapshot, "tongTien", "TongTien", "totalAmount"));
-        item.setGhiChu(firstNonEmpty(snapshot, "ghiChu", "GhiChu", "note"));
+        
+        // Note: NhapHang model doesn't have setGhiChu or setNgayCapNhat
         item.setNgayTao(firstDate(snapshot, "ngayTao", "createdAt", "NgayTao"));
         item.setNgayNhap(firstDate(snapshot, "ngayNhap", "NgayNhap"));
-        item.setNgayCapNhat(firstDate(snapshot, "ngayCapNhat", "updatedAt", "NgayCapNhat"));
+
         return item;
     }
 
@@ -134,28 +134,6 @@ public class NhapHangFragment extends Fragment {
             }
         }
         return 0d;
-    }
-
-    private static boolean firstBoolean(com.google.firebase.firestore.DocumentSnapshot snapshot, String... keys) {
-        for (String key : keys) {
-            Object raw = snapshot.get(key);
-            if (raw instanceof Boolean) {
-                return (Boolean) raw;
-            }
-            if (raw instanceof Number) {
-                return ((Number) raw).intValue() == 1;
-            }
-            if (raw instanceof String) {
-                String value = ((String) raw).trim().toLowerCase();
-                if ("1".equals(value) || "true".equals(value)) {
-                    return true;
-                }
-                if ("0".equals(value) || "false".equals(value)) {
-                    return false;
-                }
-            }
-        }
-        return false;
     }
 
     private static Date firstDate(com.google.firebase.firestore.DocumentSnapshot snapshot, String... keys) {

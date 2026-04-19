@@ -14,7 +14,7 @@ import androidx.fragment.app.Fragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.nhom5.pharma.feature.lohang.LoHangFragment;
 import com.nhom5.pharma.feature.nhacungcap.NhaCungCapFragment;
-import com.nhom5.pharma.feature.nhaphang.ChiTietNhapHangActivity;
+import com.nhom5.pharma.feature.nhaphang.NhapHangFragment;
 import com.nhom5.pharma.feature.quanly.QuanLyFragment;
 import com.nhom5.pharma.feature.sanpham.SanPhamFragment;
 
@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
         Fragment selected;
         switch (index) {
             case TAB_ORDERS:
-                selected = new ChiTietNhapHangActivity.NhapHangFragment();
+                selected = new NhapHangFragment();
                 break;
             case TAB_PRODUCTS:
                 selected = new SanPhamFragment();
