@@ -1,5 +1,6 @@
 package com.nhom5.pharma.feature.nhaphang;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -8,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -36,26 +36,35 @@ public class NhapHangFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_nhap_hang, container, false);
         recyclerViewNhapHang = view.findViewById(R.id.recyclerViewNhapHang);
+        View searchBarContainer = view.findViewById(R.id.search_bar);
         searchEditText = view.findViewById(R.id.searchEditText);
+        if (searchEditText == null && searchBarContainer != null) {
+            searchEditText = searchBarContainer.findViewById(R.id.searchEditText);
+        }
         btnAddNew = view.findViewById(R.id.btnAddNew);
+        if (btnAddNew == null && searchBarContainer != null) {
+            btnAddNew = searchBarContainer.findViewById(R.id.btnAddNew);
+        }
 
         setupRecyclerView();
         setupSearchFunctionality();
-        setupCreateSampleSync();
+        setupAddButtonOpenCreate();
         return view;
     }
 
-    private void setupCreateSampleSync() {
+    private void setupAddButtonOpenCreate() {
         if (btnAddNew == null) {
             return;
         }
 
-        btnAddNew.setOnClickListener(v -> repository.createSampleNhapHangWithLoHang()
-                .addOnSuccessListener(unused -> Toast.makeText(getContext(), "Đã tạo và đồng bộ dữ liệu mẫu lên Firebase", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Lỗi đồng bộ: " + e.getMessage(), Toast.LENGTH_SHORT).show()));
+        btnAddNew.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), TaoDonNhapActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void setupRecyclerView() {
+        repository.ensureCanonicalImportIdSchema();
         Query query = repository.getAllNhapHang();
         FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
                 .setQuery(query, this::parseNhapHang)
@@ -98,6 +107,7 @@ public class NhapHangFragment extends Fragment {
     private NhapHang parseNhapHang(com.google.firebase.firestore.DocumentSnapshot snapshot) {
         NhapHang item = new NhapHang();
         item.setId(snapshot.getId());
+        item.setMaID(firstNonEmpty(snapshot, "maID", "MaID"));
         item.setMaNCC(firstNonEmpty(snapshot, "maNCC", "MaNCC", "maNhaCungCap"));
         item.setMaNguoiNhap(firstNonEmpty(snapshot, "maNguoiNhap", "MaNguoiNhap"));
         item.setTrangThai(snapshot.get("trangThai"));

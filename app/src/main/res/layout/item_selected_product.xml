@@ -57,11 +57,15 @@
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <EditText
                 android:id="@+id/tvQuantity"
                 android:layout_width="40dp"
                 android:layout_height="match_parent"
                 android:gravity="center"
+                android:background="@android:color/transparent"
+                android:inputType="number"
+                android:importantForAutofill="no"
+                android:imeOptions="actionDone"
                 android:textColor="@color/black"
                 android:textSize="14sp"
                 android:textStyle="bold" />

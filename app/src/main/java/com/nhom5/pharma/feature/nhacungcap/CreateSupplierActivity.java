@@ -2,6 +2,7 @@ package com.nhom5.pharma.feature.nhacungcap;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.InputType;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -51,6 +52,17 @@ public class CreateSupplierActivity extends AppCompatActivity {
         btnLuu = findViewById(R.id.btnLuu);
         btnBoQua = findViewById(R.id.btnBoQua);
         ivBack = findViewById(R.id.ivBack);
+
+        configureVietnameseInput();
+    }
+
+    private void configureVietnameseInput() {
+        int textFlags = InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_CAP_WORDS
+                | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT
+                | InputType.TYPE_TEXT_VARIATION_NORMAL;
+        etName.setInputType(textFlags);
+        etAddress.setInputType(textFlags | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
     }
 
     private void generateNCCIDAndSave() {

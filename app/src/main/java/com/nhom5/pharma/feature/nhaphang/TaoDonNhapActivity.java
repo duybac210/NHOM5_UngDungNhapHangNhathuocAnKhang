@@ -29,9 +29,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,6 +79,7 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         setupRecyclerView();
         setupSpinners();
         NhapHangRepository.getInstance().ensureLegacyFieldSchema();
+        NhapHangRepository.getInstance().ensureCanonicalImportIdSchema();
         NhaCungCapRepository.getInstance().ensureCanonicalSchema();
         loadSuppliersFromFirebase();
         updateAddBatchButtonVisibility();
@@ -85,7 +88,8 @@ public class TaoDonNhapActivity extends AppCompatActivity {
 
         findViewById(R.id.btnAddProduct).setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);
-            intent.putExtra("SELECT_MODE", true);
+            intent.putExtra(MainActivity.EXTRA_SELECT_MODE, true);
+            intent.putExtra(MainActivity.EXTRA_START_TAB, 1);
             pickProductLauncher.launch(intent);
         });
 
@@ -150,6 +154,8 @@ public class TaoDonNhapActivity extends AppCompatActivity {
             return;
         }
 
+        NhapHangRepository.getInstance().ensureCanonicalImportIdSchema();
+
         btnSave.setEnabled(false);
         db.collection("NhapHang")
                 .get()
@@ -161,23 +167,25 @@ public class TaoDonNhapActivity extends AppCompatActivity {
     }
 
     private String buildNextImportId(List<? extends DocumentSnapshot> documents) {
-        long maxNumber = 0;
-        int maxDigits = 4;
+        Set<Long> usedNumbers = new HashSet<>();
 
         for (DocumentSnapshot document : documents) {
-            String[] candidates = new String[] { document.getId(), document.getString("maID") };
+            String maIdField = document.getString("maID");
+            String[] candidates = new String[] { maIdField, document.getId() };
             for (String candidate : candidates) {
                 long number = extractImportIdNumber(candidate);
-                if (number < 0) {
-                    continue;
+                if (number > 0) {
+                    usedNumbers.add(number);
                 }
-
-                maxNumber = Math.max(maxNumber, number);
-                maxDigits = Math.max(maxDigits, candidate.trim().length() - 2);
             }
         }
 
-        return String.format(Locale.getDefault(), "NH%0" + maxDigits + "d", maxNumber + 1);
+        long nextNumber = 1;
+        while (usedNumbers.contains(nextNumber)) {
+            nextNumber++;
+        }
+
+        return String.format(Locale.getDefault(), "NH%04d", nextNumber);
     }
 
     private long extractImportIdNumber(String rawId) {
@@ -211,6 +219,7 @@ public class TaoDonNhapActivity extends AppCompatActivity {
 
         // Schema đơn nhập.
         order.put("maNCC", supplierId);
+        order.put("maID", customId);
         order.put("maNguoiNhap", DEFAULT_MA_NGUOI_NHAP);
         order.put("ngayNhap", new Timestamp(calendar.getTime()));
         order.put("ngayTao", new Timestamp(calendar.getTime()));
@@ -221,35 +230,30 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         order.put("tongTien", currentTotal);
 
         WriteBatch batch = db.batch();
-        DocumentReference orderRef;
-        String finalOrderId;
-
-        if (customId != null) {
-            finalOrderId = customId;
-            orderRef = db.collection("NhapHang").document(customId);
-        } else {
-            orderRef = db.collection("NhapHang").document();
-            finalOrderId = orderRef.getId();
+        if (customId == null || customId.trim().isEmpty()) {
+            Toast.makeText(this, "Không tạo được mã đơn hợp lệ", Toast.LENGTH_SHORT).show();
+            btnSave.setEnabled(true);
+            return;
         }
+        String finalOrderId = customId.trim();
+        DocumentReference orderRef = db.collection("NhapHang").document(finalOrderId);
 
         // 1. Thêm lệnh tạo đơn nhập vào batch
         batch.set(orderRef, order);
 
         // 2. Thêm lệnh tạo từng Lô hàng vào batch để liên kết với đơn nhập và sản phẩm
-        for (SelectedProduct product : selectedProducts) {
-            DocumentReference loHangRef = db.collection("LoHang").document(); // ID tự động cho lô hàng
-            
+        for (int index = 0; index < selectedProducts.size(); index++) {
+            SelectedProduct product = selectedProducts.get(index);
+            String soLo = String.format(Locale.getDefault(), "%s-L%02d", finalOrderId, index + 1);
+            DocumentReference loHangRef = db.collection("LoHang").document(soLo);
+
             Map<String, Object> loHangData = new HashMap<>();
+            loHangData.put("soLo", soLo);
             loHangData.put("maNhapHang", finalOrderId); // Liên kết với đơn nhập
             loHangData.put("maSP", product.getMaSanPham()); // Liên kết với sản phẩm
             loHangData.put("soLuong", (double) product.getSoLuong());
             loHangData.put("donGiaNhap", product.getDonGia());
             loHangData.put("ngayNhap", new Timestamp(calendar.getTime()));
-            
-            // Tạm thời giả định hạn sử dụng là 2 năm kể từ ngày nhập (có thể thêm UI chọn sau)
-            Calendar expiryCalendar = (Calendar) calendar.clone();
-            expiryCalendar.add(Calendar.YEAR, 2);
-            loHangData.put("hanSuDung", new Timestamp(expiryCalendar.getTime()));
 
             batch.set(loHangRef, loHangData);
         }

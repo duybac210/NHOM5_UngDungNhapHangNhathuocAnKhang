@@ -8,9 +8,12 @@ import com.nhom5.pharma.util.FirestoreValueParser;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class ProductSchemaSync {
     private static boolean attempted;
+    private static boolean supplierBackfillAttempted;
 
     private ProductSchemaSync() {
     }
@@ -34,8 +37,92 @@ public final class ProductSchemaSync {
             }
 
             if (hasChanges) {
-                batch.commit();
+                batch.commit().addOnSuccessListener(unused -> syncSupplierMappingOnce(db));
+            } else {
+                syncSupplierMappingOnce(db);
             }
+        });
+    }
+
+    private static synchronized void syncSupplierMappingOnce(FirebaseFirestore db) {
+        if (supplierBackfillAttempted || db == null) {
+            return;
+        }
+        supplierBackfillAttempted = true;
+
+        db.collection("LoHang").get().addOnSuccessListener(loHangSnapshot -> {
+            Map<String, String> productToImport = new HashMap<>();
+            Set<String> importIds = new HashSet<>();
+
+            for (DocumentSnapshot loDoc : loHangSnapshot.getDocuments()) {
+                String maSP = FirestoreValueParser.safeString(loDoc, "maSP");
+                String maNhapHang = FirestoreValueParser.safeString(loDoc, "maNhapHang");
+                if (maSP == null || maSP.trim().isEmpty() || maNhapHang == null || maNhapHang.trim().isEmpty()) {
+                    continue;
+                }
+                productToImport.put(maSP.trim(), maNhapHang.trim());
+                importIds.add(maNhapHang.trim());
+            }
+
+            if (productToImport.isEmpty() || importIds.isEmpty()) {
+                return;
+            }
+
+            db.collection("NhapHang").get().addOnSuccessListener(nhapSnapshot -> {
+                Map<String, String> importToSupplier = new HashMap<>();
+                for (DocumentSnapshot nhDoc : nhapSnapshot.getDocuments()) {
+                    if (!importIds.contains(nhDoc.getId())) {
+                        continue;
+                    }
+                    String maNCC = FirestoreValueParser.safeString(nhDoc, "maNCC");
+                    if (maNCC == null || maNCC.trim().isEmpty()) {
+                        maNCC = FirestoreValueParser.safeString(nhDoc, "maNhaCungCap");
+                    }
+                    if (maNCC != null && !maNCC.trim().isEmpty()) {
+                        importToSupplier.put(nhDoc.getId(), maNCC.trim());
+                    }
+                }
+
+                if (importToSupplier.isEmpty()) {
+                    return;
+                }
+
+                db.collection("SanPham").get().addOnSuccessListener(spSnapshot -> {
+                    WriteBatch batch = db.batch();
+                    boolean hasChanges = false;
+
+                    for (DocumentSnapshot spDoc : spSnapshot.getDocuments()) {
+                        String currentMaNCC = FirestoreValueParser.safeString(spDoc, "maNCC");
+                        if (currentMaNCC != null && !currentMaNCC.trim().isEmpty()) {
+                            continue;
+                        }
+
+                        String maSP = FirestoreValueParser.safeString(spDoc, "maID");
+                        if (maSP == null || maSP.trim().isEmpty()) {
+                            maSP = spDoc.getId();
+                        }
+
+                        String maNhapHang = productToImport.get(maSP);
+                        if (maNhapHang == null) {
+                            continue;
+                        }
+                        String maNCC = importToSupplier.get(maNhapHang);
+                        if (maNCC == null || maNCC.trim().isEmpty()) {
+                            continue;
+                        }
+
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("maNCC", maNCC);
+                        updates.put("ngayCapNhat", FieldValue.serverTimestamp());
+                        batch.update(spDoc.getReference(), updates);
+                        hasChanges = true;
+                    }
+
+                    if (hasChanges) {
+                        batch.commit();
+                    }
+                });
+            });
         });
     }
 
@@ -71,6 +158,12 @@ public final class ProductSchemaSync {
             updates.put("maID", doc.getId());
         }
 
+        String maNCC = FirestoreValueParser.safeString(doc, "maNCC");
+        String maNhaCungCap = FirestoreValueParser.safeString(doc, "maNhaCungCap");
+        if ((maNCC == null || maNCC.trim().isEmpty()) && maNhaCungCap != null && !maNhaCungCap.trim().isEmpty()) {
+            updates.put("maNCC", maNhaCungCap.trim());
+        }
+
         if (doc.contains("tenSanPham")) {
             updates.put("tenSanPham", FieldValue.delete());
         }
@@ -82,6 +175,9 @@ public final class ProductSchemaSync {
         }
         if (doc.contains("nuocSanXuat")) {
             updates.put("nuocSanXuat", FieldValue.delete());
+        }
+        if (doc.contains("maNhaCungCap")) {
+            updates.put("maNhaCungCap", FieldValue.delete());
         }
 
         return updates;

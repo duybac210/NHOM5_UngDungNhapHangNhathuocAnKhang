@@ -35,6 +35,7 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
     private List<Product> fullList = new ArrayList<>();
     private EditText searchEditText;
     private boolean isSelectMode = false;
+    private String supplierFilterId;
 
     @Nullable
     @Override
@@ -42,7 +43,8 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         View view = inflater.inflate(R.layout.fragment_san_pham, container, false);
 
         if (getActivity() != null && getActivity().getIntent() != null) {
-            isSelectMode = getActivity().getIntent().getBooleanExtra("SELECT_MODE", false);
+            isSelectMode = getActivity().getIntent().getBooleanExtra(com.nhom5.pharma.MainActivity.EXTRA_SELECT_MODE, false);
+            supplierFilterId = null;
         }
 
         RecyclerView rvProducts = view.findViewById(R.id.rv_products);
@@ -52,6 +54,8 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         rvProducts.setAdapter(adapter);
 
         viewModel = new ViewModelProvider(this).get(ProductViewModel.class);
+
+        viewModel.listenToProducts(supplierFilterId);
         
         // ĐỒNG BỘ REAL-TIME CỦA TRÀ MY
         viewModel.getProducts().observe(getViewLifecycleOwner(), products -> {
@@ -78,8 +82,14 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         }
         
         if (btnAddNew != null) {
-            // Vô hiệu hóa theo yêu cầu của bạn
-            btnAddNew.setOnClickListener(null); 
+            btnAddNew.setVisibility(isSelectMode ? View.GONE : View.VISIBLE);
+            btnAddNew.setOnClickListener(v -> {
+                if (isSelectMode) {
+                    return;
+                }
+                Intent intent = new Intent(requireContext(), TaoSanPhamActivity.class);
+                startActivity(intent);
+            });
         }
 
         searchEditText = view.findViewById(R.id.searchEditText);

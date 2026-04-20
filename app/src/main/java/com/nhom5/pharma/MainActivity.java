@@ -25,6 +25,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int TAB_BATCHES = 2;
     private static final int TAB_SUPPLIERS = 3;
     private static final int TAB_MANAGE = 4;
+    public static final String EXTRA_SELECT_MODE = "SELECT_MODE";
+    public static final String EXTRA_START_TAB = "START_TAB";
+    public static final String EXTRA_SUPPLIER_ID = "SUPPLIER_ID";
 
     private static final int ACTIVE_COLOR = Color.parseColor("#5cc849");
     private static final int INACTIVE_COLOR = Color.parseColor("#000000");
@@ -78,8 +81,16 @@ public class MainActivity extends AppCompatActivity {
         tabSuppliers.setOnClickListener(v -> selectTab(TAB_SUPPLIERS));
         tabManage.setOnClickListener(v -> selectTab(TAB_MANAGE));
 
-        // Mặc định chọn TAB Nhà cung cấp
-        selectTab(TAB_SUPPLIERS);
+        boolean isSelectMode = getIntent().getBooleanExtra(EXTRA_SELECT_MODE, false);
+        int requestedTab = getIntent().getIntExtra(EXTRA_START_TAB, TAB_SUPPLIERS);
+        if (isSelectMode) {
+            requestedTab = TAB_PRODUCTS;
+        }
+        String supplierId = getIntent().getStringExtra(EXTRA_SUPPLIER_ID);
+        if (supplierId != null && !supplierId.trim().isEmpty()) {
+            getIntent().putExtra(EXTRA_SUPPLIER_ID, supplierId.trim());
+        }
+        selectTab(requestedTab);
     }
 
     private void selectTab(int index) {

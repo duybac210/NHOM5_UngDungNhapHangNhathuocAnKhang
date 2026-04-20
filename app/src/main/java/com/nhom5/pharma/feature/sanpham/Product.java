@@ -16,6 +16,7 @@ public class Product {
 
     private String id; 
     private String maID; 
+    private String maNCC;
     private String tenSP;
     private double giavon;
     private double giaBan;
@@ -50,6 +51,9 @@ public class Product {
         return (maID != null) ? "Mã: " + maID : (id != null ? "Mã: " + id : "(Chưa có tên)");
     }
     public void setTenSP(String tenSP) { this.tenSP = tenSP; }
+
+    public String getMaNCC() { return maNCC != null ? maNCC : ""; }
+    public void setMaNCC(String maNCC) { this.maNCC = maNCC; }
 
     public double getGiavon() { return giavon; }
     public void setGiavon(double giavon) { this.giavon = giavon; }

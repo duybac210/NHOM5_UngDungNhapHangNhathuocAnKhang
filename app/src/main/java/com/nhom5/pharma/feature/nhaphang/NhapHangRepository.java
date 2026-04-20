@@ -20,6 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class NhapHangRepository {
     private static NhapHangRepository instance;
@@ -28,6 +34,13 @@ public class NhapHangRepository {
     private boolean statusNormalizationRunning;
     private boolean fieldNormalizationDone;
     private boolean fieldNormalizationRunning;
+    private boolean maIdNormalizationDone;
+    private boolean maIdNormalizationRunning;
+    private boolean docIdMigrationDone;
+    private boolean docIdMigrationRunning;
+    private boolean importIdResequenceDone;
+    private boolean importIdResequenceRunning;
+    private static final Pattern IMPORT_CODE_PATTERN = Pattern.compile("^NH(\\d+)$");
     private static final String DEFAULT_MA_NGUOI_NHAP = "USER003";
 
     private NhapHangRepository() {
@@ -44,9 +57,270 @@ public class NhapHangRepository {
     public Query getAllNhapHang() {
         normalizeStatusSchemaOnce();
         normalizeFieldSchemaOnce();
+        normalizeMaIdSchemaOnce();
         forceNormalizeKnownPendingDocs();
         return db.collection("NhapHang")
-                .orderBy("ngayTao", Query.Direction.DESCENDING);
+                .orderBy("maID", Query.Direction.DESCENDING);
+    }
+
+    private void normalizeMaIdSchemaOnce() {
+        if (maIdNormalizationDone || maIdNormalizationRunning) {
+            return;
+        }
+        maIdNormalizationRunning = true;
+
+        db.collection("NhapHang").get().addOnSuccessListener(snapshot -> {
+            long maxNumber = 0;
+            for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                String code = safeGetString(doc, "maID");
+                if (code == null || code.trim().isEmpty()) {
+                    code = doc.getId();
+                }
+                long number = extractNhapHangNumber(code);
+                if (number > maxNumber) {
+                    maxNumber = number;
+                }
+            }
+
+            List<DocumentSnapshot> invalidDocs = new ArrayList<>();
+            for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                String maID = safeGetString(doc, "maID");
+                if (!isValidNhapHangCode(maID)) {
+                    invalidDocs.add(doc);
+                }
+            }
+
+            if (invalidDocs.isEmpty()) {
+                maIdNormalizationDone = true;
+                maIdNormalizationRunning = false;
+                migrateLegacyDocumentIdsOnce();
+                return;
+            }
+
+            WriteBatch batch = db.batch();
+            long next = maxNumber + 1;
+            for (DocumentSnapshot doc : invalidDocs) {
+                batch.update(doc.getReference(), "maID", String.format(Locale.getDefault(), "NH%04d", next++));
+                batch.update(doc.getReference(), "ngayCapNhat", FieldValue.serverTimestamp());
+            }
+
+            batch.commit()
+                    .addOnSuccessListener(unused -> {
+                        maIdNormalizationDone = true;
+                        maIdNormalizationRunning = false;
+                        migrateLegacyDocumentIdsOnce();
+                    })
+                    .addOnFailureListener(e -> maIdNormalizationRunning = false);
+        }).addOnFailureListener(e -> maIdNormalizationRunning = false);
+    }
+
+    private void resequenceImportIdsFromOneOnce() {
+        if (importIdResequenceDone || importIdResequenceRunning) {
+            return;
+        }
+        importIdResequenceRunning = true;
+
+        db.collection("NhapHang").get().addOnSuccessListener(snapshot -> {
+            List<DocumentSnapshot> docs = new ArrayList<>(snapshot.getDocuments());
+            if (docs.isEmpty()) {
+                importIdResequenceDone = true;
+                importIdResequenceRunning = false;
+                return;
+            }
+
+            Collections.sort(docs, Comparator.comparingLong(doc -> {
+                String code = safeGetString(doc, "maID");
+                if (code == null || code.trim().isEmpty()) {
+                    code = doc.getId();
+                }
+                long n = extractNhapHangNumber(code);
+                return n < 0 ? Long.MAX_VALUE : n;
+            }));
+
+            LinkedList<MigrationItem> tempMigrations = new LinkedList<>();
+            LinkedList<MigrationItem> finalMigrations = new LinkedList<>();
+            long next = 1;
+
+            for (DocumentSnapshot doc : docs) {
+                String targetId = String.format(Locale.getDefault(), "NH%04d", next++);
+                String oldId = doc.getId();
+                String currentMaId = safeGetString(doc, "maID");
+
+                boolean needsMove = !oldId.equals(targetId);
+                boolean needsMaIdFix = currentMaId == null || !targetId.equals(currentMaId.trim().toUpperCase(Locale.ROOT));
+                if (!needsMove && !needsMaIdFix) {
+                    continue;
+                }
+
+                Map<String, Object> data = doc.getData();
+                if (data == null) {
+                    data = new HashMap<>();
+                } else {
+                    data = new HashMap<>(data);
+                }
+                data.put("maID", targetId);
+                data.put("ngayCapNhat", FieldValue.serverTimestamp());
+
+                if (needsMove) {
+                    String tempId = "TMP_" + UUID.randomUUID().toString().replace("-", "");
+                    tempMigrations.add(new MigrationItem(oldId, tempId, data));
+                    finalMigrations.add(new MigrationItem(tempId, targetId, data));
+                } else {
+                    doc.getReference().update(data);
+                }
+            }
+
+            if (tempMigrations.isEmpty() && finalMigrations.isEmpty()) {
+                importIdResequenceDone = true;
+                importIdResequenceRunning = false;
+                return;
+            }
+
+            processResequenceQueue(tempMigrations, () ->
+                    processResequenceQueue(finalMigrations, () -> {
+                        importIdResequenceDone = true;
+                        importIdResequenceRunning = false;
+                    })
+            );
+        }).addOnFailureListener(e -> importIdResequenceRunning = false);
+    }
+
+    private void processResequenceQueue(LinkedList<MigrationItem> migrations, Runnable onDone) {
+        if (migrations.isEmpty()) {
+            onDone.run();
+            return;
+        }
+
+        MigrationItem item = migrations.removeFirst();
+        DocumentReference oldRef = db.collection("NhapHang").document(item.oldId);
+        DocumentReference newRef = db.collection("NhapHang").document(item.targetId);
+
+        db.collection("LoHang")
+                .whereEqualTo("maNhapHang", item.oldId)
+                .get()
+                .addOnSuccessListener(loSnapshot -> {
+                    WriteBatch batch = db.batch();
+                    batch.set(newRef, item.data, SetOptions.merge());
+
+                    for (DocumentSnapshot loDoc : loSnapshot.getDocuments()) {
+                        batch.update(loDoc.getReference(), "maNhapHang", item.targetId);
+                        batch.update(loDoc.getReference(), "ngayCapNhat", FieldValue.serverTimestamp());
+                    }
+
+                    batch.delete(oldRef);
+                    batch.commit()
+                            .addOnSuccessListener(unused -> processResequenceQueue(migrations, onDone))
+                            .addOnFailureListener(e -> importIdResequenceRunning = false);
+                })
+                .addOnFailureListener(e -> importIdResequenceRunning = false);
+    }
+
+    private void migrateLegacyDocumentIdsOnce() {
+        if (docIdMigrationDone || docIdMigrationRunning) {
+            return;
+        }
+        docIdMigrationRunning = true;
+
+        db.collection("NhapHang").get().addOnSuccessListener(snapshot -> {
+            LinkedList<MigrationItem> migrations = new LinkedList<>();
+            for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                String oldId = doc.getId();
+                String maID = safeGetString(doc, "maID");
+                if (!isValidNhapHangCode(maID)) {
+                    continue;
+                }
+                String targetId = maID.trim().toUpperCase(Locale.ROOT);
+                if (oldId.equals(targetId)) {
+                    continue;
+                }
+
+                Map<String, Object> data = doc.getData();
+                if (data == null) {
+                    data = new HashMap<>();
+                } else {
+                    data = new HashMap<>(data);
+                }
+                data.put("maID", targetId);
+                data.put("ngayCapNhat", FieldValue.serverTimestamp());
+                migrations.add(new MigrationItem(oldId, targetId, data));
+            }
+
+            if (migrations.isEmpty()) {
+                docIdMigrationDone = true;
+                docIdMigrationRunning = false;
+                resequenceImportIdsFromOneOnce();
+                return;
+            }
+
+            processNextMigration(migrations);
+        }).addOnFailureListener(e -> docIdMigrationRunning = false);
+    }
+
+    private void processNextMigration(LinkedList<MigrationItem> migrations) {
+        if (migrations.isEmpty()) {
+            docIdMigrationDone = true;
+            docIdMigrationRunning = false;
+            resequenceImportIdsFromOneOnce();
+            return;
+        }
+
+        MigrationItem item = migrations.removeFirst();
+        DocumentReference oldRef = db.collection("NhapHang").document(item.oldId);
+        DocumentReference newRef = db.collection("NhapHang").document(item.targetId);
+
+        newRef.get().addOnSuccessListener(newDoc -> {
+            db.collection("LoHang")
+                    .whereEqualTo("maNhapHang", item.oldId)
+                    .get()
+                    .addOnSuccessListener(loSnapshot -> {
+                        WriteBatch batch = db.batch();
+                        if (!newDoc.exists()) {
+                            batch.set(newRef, item.data, SetOptions.merge());
+                        }
+
+                        for (DocumentSnapshot loDoc : loSnapshot.getDocuments()) {
+                            batch.update(loDoc.getReference(), "maNhapHang", item.targetId);
+                            batch.update(loDoc.getReference(), "ngayCapNhat", FieldValue.serverTimestamp());
+                        }
+
+                        batch.delete(oldRef);
+                        batch.commit()
+                                .addOnSuccessListener(unused -> processNextMigration(migrations))
+                                .addOnFailureListener(e -> docIdMigrationRunning = false);
+                    })
+                    .addOnFailureListener(e -> docIdMigrationRunning = false);
+        }).addOnFailureListener(e -> docIdMigrationRunning = false);
+    }
+
+    private static final class MigrationItem {
+        final String oldId;
+        final String targetId;
+        final Map<String, Object> data;
+
+        MigrationItem(String oldId, String targetId, Map<String, Object> data) {
+            this.oldId = oldId;
+            this.targetId = targetId;
+            this.data = data;
+        }
+    }
+
+    private boolean isValidNhapHangCode(String code) {
+        return code != null && IMPORT_CODE_PATTERN.matcher(code.trim().toUpperCase(Locale.ROOT)).matches();
+    }
+
+    private long extractNhapHangNumber(String rawId) {
+        if (rawId == null) {
+            return -1;
+        }
+        String normalized = rawId.trim().toUpperCase(Locale.ROOT);
+        if (!normalized.startsWith("NH") || normalized.length() <= 2) {
+            return -1;
+        }
+        try {
+            return Long.parseLong(normalized.substring(2));
+        } catch (NumberFormatException ignored) {
+            return -1;
+        }
     }
 
     private void normalizeStatusSchemaOnce() {
@@ -163,7 +437,6 @@ public class NhapHangRepository {
         if (doc.contains("tenNhaCungCap")) updates.put("tenNhaCungCap", FieldValue.delete());
         if (doc.contains("hinhThucThanhToan")) updates.put("hinhThucThanhToan", FieldValue.delete());
         if (doc.contains("createdAt")) updates.put("createdAt", FieldValue.delete());
-        if (doc.contains("maID")) updates.put("maID", FieldValue.delete());
 
         return updates;
     }
@@ -254,16 +527,18 @@ public class NhapHangRepository {
                 .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING);
     }
 
-    // Tìm kiếm theo Mã đơn (Document ID) thời gian thực
+    // Tìm kiếm theo mã đơn chuẩn NHxxxx
     public Query searchByMaDon(String searchText) {
         if (searchText == null || searchText.trim().isEmpty()) {
             return getAllNhapHang();
         }
 
+        String keyword = searchText.trim().toUpperCase(Locale.ROOT);
+
         return db.collection("NhapHang")
-                .orderBy(FieldPath.documentId())
-                .startAt(searchText)
-                .endAt(searchText + "\uf8ff");
+                .orderBy("maID")
+                .startAt(keyword)
+                .endAt(keyword + "\uf8ff");
     }
 
     public Query searchLoHang(String searchText) {
@@ -366,40 +641,6 @@ public class NhapHangRepository {
                 .set(update, SetOptions.merge());
     }
 
-    public Task<Void> createSampleNhapHangWithLoHang() {
-        WriteBatch batch = db.batch();
-
-        DocumentReference nhapHangRef = db.collection("NhapHang").document();
-        String nhapHangId = nhapHangRef.getId();
-
-        Map<String, Object> nhapHangData = new HashMap<>();
-        nhapHangData.put("maNCC", "NCC_DEMO");
-        nhapHangData.put("maNguoiNhap", "USER_DEMO");
-        nhapHangData.put("trangThai", true);
-        nhapHangData.put("tongTien", 250000d);
-        nhapHangData.put("ghiChu", "Tao tu app Android");
-        nhapHangData.put("ngayTao", FieldValue.serverTimestamp());
-        nhapHangData.put("ngayCapNhat", FieldValue.serverTimestamp());
-        batch.set(nhapHangRef, nhapHangData, SetOptions.merge());
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, 180);
-        Date hanSuDung = calendar.getTime();
-
-        String soLo = "LO" + System.currentTimeMillis();
-        Map<String, Object> loHangData = new HashMap<>();
-        loHangData.put("soLo", soLo);
-        loHangData.put("maNhapHang", nhapHangId);
-        loHangData.put("maSP", "SP_DEMO");
-        loHangData.put("soLuong", 100d);
-        loHangData.put("donGiaNhap", 2500d);
-        loHangData.put("ngayNhap", FieldValue.serverTimestamp());
-        loHangData.put("hanSuDung", hanSuDung);
-        loHangData.put("ngayTao", FieldValue.serverTimestamp());
-        batch.set(db.collection("LoHang").document(soLo), loHangData, SetOptions.merge());
-
-        return batch.commit();
-    }
 
     public Task<Void> replaceLoHangByNhapHangId(String nhapHangId, List<LoHang> loHangs) {
         if (nhapHangId == null || nhapHangId.trim().isEmpty()) {
@@ -453,5 +694,9 @@ public class NhapHangRepository {
 
     public void ensureLegacyFieldSchema() {
         normalizeFieldSchemaOnce();
+    }
+
+    public void ensureCanonicalImportIdSchema() {
+        normalizeMaIdSchemaOnce();
     }
 }

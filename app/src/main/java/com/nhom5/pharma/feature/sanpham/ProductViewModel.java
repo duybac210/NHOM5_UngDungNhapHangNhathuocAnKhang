@@ -10,12 +10,11 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.FieldPath;
-import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -32,31 +31,49 @@ public class ProductViewModel extends ViewModel {
 
     public LiveData<List<Product>> getProducts() { return products; }
 
-    private void startListening() {
-        if (listener != null) return;
-        
-        // LUÔN LẮNG NGHE REAL-TIME: Firebase thay đổi -> App nhảy dữ liệu ngay
-        listener = productsRef.orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null) {
-                        Log.e("ProductVM", "Firestore Listen failed: " + error.getMessage());
-                        return;
-                    }
-                    if (value != null) {
-                        List<Product> list = new ArrayList<>();
-                        for (DocumentSnapshot doc : value.getDocuments()) {
-                            try {
-                                Product p = doc.toObject(Product.class);
-                                if (p == null) p = new Product();
-                                p.setId(doc.getId()); // Đồng bộ ID từ Firebase
-                                list.add(p);
-                            } catch (Exception e) {
-                                Log.e("ProductVM", "Lỗi parse document: " + doc.getId());
+    public void listenToProducts(String supplierId) {
+        if (listener != null) {
+            listener.remove();
+            listener = null;
+        }
+
+        Query query = productsRef.orderBy(FieldPath.documentId(), Query.Direction.DESCENDING);
+        final String normalizedSupplierId = supplierId == null ? null : supplierId.trim();
+
+        listener = query.addSnapshotListener((value, error) -> {
+            if (error != null) {
+                Log.e("ProductVM", "Firestore Listen failed: " + error.getMessage());
+                return;
+            }
+            if (value != null) {
+                List<Product> list = new ArrayList<>();
+                for (DocumentSnapshot doc : value.getDocuments()) {
+                    try {
+                        String productSupplierId = firstNonEmpty(doc, "maNCC", "maNhaCungCap", "supplierId");
+                        if (normalizedSupplierId != null && !normalizedSupplierId.isEmpty()) {
+                            if (productSupplierId == null || !normalizedSupplierId.equals(productSupplierId.trim())) {
+                                continue;
                             }
                         }
-                        products.setValue(list);
+
+                        Product p = doc.toObject(Product.class);
+                        if (p == null) p = new Product();
+                        p.setId(doc.getId());
+                        if (productSupplierId != null && !productSupplierId.trim().isEmpty()) {
+                            p.setMaNCC(productSupplierId.trim());
+                        }
+                        list.add(p);
+                    } catch (Exception e) {
+                        Log.e("ProductVM", "Lỗi parse document: " + doc.getId());
                     }
-                });
+                }
+                products.setValue(list);
+            }
+        });
+    }
+
+    private void startListening() {
+        listenToProducts(null);
     }
 
     public void saveProduct(Product product) {
@@ -66,6 +83,7 @@ public class ProductViewModel extends ViewModel {
         data.put("giavon", product.getGiavon());
         data.put("giaBan", product.getGiaBan());
         data.put("maID", product.getMaID());
+        data.put("maNCC", product.getMaNCC());
         data.put("maVach", product.getMaVach());
         data.put("moTa", product.getMoTa());
         data.put("hangSX", product.getHangSX());
@@ -83,6 +101,16 @@ public class ProductViewModel extends ViewModel {
 
     public void deleteProduct(String id) {
         if (id != null) productsRef.document(id).delete();
+    }
+
+    private String firstNonEmpty(DocumentSnapshot doc, String... keys) {
+        for (String key : keys) {
+            String value = doc.getString(key);
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
+        }
+        return null;
     }
 
     @Override
