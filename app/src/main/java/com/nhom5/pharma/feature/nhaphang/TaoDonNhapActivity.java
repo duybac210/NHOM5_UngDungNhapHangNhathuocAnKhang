@@ -52,6 +52,7 @@ public class TaoDonNhapActivity extends AppCompatActivity {
     private EditText etImportDate;
     private Calendar calendar = Calendar.getInstance();
     private FirebaseFirestore db;
+    private NhapHangRepository repository;
     private List<String> supplierIds = new ArrayList<>();
     private List<String> supplierNames = new ArrayList<>();
     private ArrayAdapter<String> supplierAdapter;
@@ -86,10 +87,18 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                             loHang.setHanSuDung(new java.util.Date(expDate));
                             loHang.setSoLuong(quantity);
                             p.addLoHang(loHang);
+
+                            // Dong bo so luong: so luong nhap trong LoHang se cap nhat ra so luong san pham ben ngoai.
+                            // UI ben ngoai dang la int, nen lam tron ve so nguyen.
+                            int qtyInt = (int) Math.round(quantity);
+                            if (qtyInt <= 0) qtyInt = 1;
+                            p.setSoLuong(qtyInt);
                             break;
                         }
                     }
                     adapter.notifyDataSetChanged();
+                    // Dong bo tong gia tri don nhap theo so luong moi
+                    updateTotal();
                 }
             }
     );
@@ -99,6 +108,7 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tao_don_nhap);
         db = FirebaseFirestore.getInstance();
+        repository = NhapHangRepository.getInstance();
 
         initViews();
         setupBackNavigation();
@@ -244,6 +254,20 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         DocumentReference orderRef = db.collection("NhapHang").document(customId.trim());
         batch.set(orderRef, order);
 
+        // Luu Lo hang: tu dong tao soLo tang dan theo database (global).
+        final ArrayList<LoHang> flatList = flattenLoHangs();
+        generateSoLoAndAddToBatch(batch, customId, flatList, 0)
+                .addOnSuccessListener(unused -> batch.commit()
+                        .addOnSuccessListener(aVoid -> onSaveSuccess())
+                        .addOnFailureListener(this::onSaveFailure))
+                .addOnFailureListener(this::onSaveFailure);
+    }
+
+    private ArrayList<LoHang> flattenLoHangs() {
+        ArrayList<LoHang> flat = new ArrayList<>();
+        for (SelectedProduct product : selectedProducts) {
+            flat.addAll(product.getLoHangs());
+
         for (SelectedProduct product : selectedProducts) {
             for (int i = 0; i < product.getLoHangs().size(); i++) {
                 LoHang lo = product.getLoHangs().get(i);
@@ -255,12 +279,50 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                 batch.set(loRef, data);
             }
         }
+        return flat;
+    }
+
+
+    /**
+     * Tao soLo theo counter tren Firestore (NhapHangRepository.generateNextSoLo),
+     * add vao WriteBatch, chua commit. Chay de quy tu 0..n-1.
+     */
+    private com.google.android.gms.tasks.Task<Void> generateSoLoAndAddToBatch(
+            WriteBatch batch,
+            String maNhapHang,
+            ArrayList<LoHang> loHangs,
+            int index
+    ) {
+        if (index >= loHangs.size()) {
+            return com.google.android.gms.tasks.Tasks.forResult(null);
+        }
+
+        LoHang lo = loHangs.get(index);
+        return repository.generateNextSoLo()
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        Exception e = task.getException() != null ? task.getException() : new RuntimeException("Khong tao duoc so lo");
+                        return com.google.android.gms.tasks.Tasks.forException(e);
+                    }
+                    String soLo = task.getResult();
+                    DocumentReference loRef = db.collection("LoHang").document(soLo);
+
+                    Map<String, Object> data = lo.toFirestoreMap();
+                    data.put("soLo", soLo);
+                    data.put("maNhapHang", maNhapHang);
+                    // Lien ket ngay nhap tu don nhap vao lo hang
+                    data.put("ngayNhap", new Timestamp(calendar.getTime()));
+                    batch.set(loRef, data);
+
+                    return generateSoLoAndAddToBatch(batch, maNhapHang, loHangs, index + 1);
+                });
 
         batch.commit()
                 .addOnSuccessListener(aVoid -> {
                     SuccessDialogHelper.showSuccessDialog(this, "Lưu đơn nhập thành công!", this::finish);
                 })
                 .addOnFailureListener(this::onSaveFailure);
+
     }
 
     private void onSaveSuccess() {

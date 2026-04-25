@@ -40,8 +40,12 @@ public class NhapHangRepository {
     private boolean docIdMigrationRunning;
     private boolean importIdResequenceDone;
     private boolean importIdResequenceRunning;
+    private boolean loHangCounterNormalizedDone;
+    private boolean loHangCounterNormalizedRunning;
     private static final Pattern IMPORT_CODE_PATTERN = Pattern.compile("^NH(\\d+)$");
     private static final String DEFAULT_MA_NGUOI_NHAP = "USER003";
+
+    private static final Pattern LO_HANG_CODE_PATTERN = Pattern.compile("^LH(\\d+)$", Pattern.CASE_INSENSITIVE);
 
     private NhapHangRepository() {
         db = FirebaseFirestore.getInstance();
@@ -61,6 +65,95 @@ public class NhapHangRepository {
         forceNormalizeKnownPendingDocs();
         return db.collection("NhapHang")
                 .orderBy("maID", Query.Direction.DESCENDING);
+    }
+
+    /**
+     * Dam bao counter /counters/LoHang.current khong bi thieu so so voi du lieu hien co tren collection LoHang.
+     * Ham nay chay 1 lan (best-effort) de tu dong dong bo sau moi lan sua/restore data.
+     */
+    public void ensureLoHangCounterNormalized() {
+        if (loHangCounterNormalizedDone || loHangCounterNormalizedRunning) {
+            return;
+        }
+        loHangCounterNormalizedRunning = true;
+
+        DocumentReference counterRef = db.collection("counters").document("LoHang");
+        counterRef.get().addOnSuccessListener(counterSnap -> {
+            long current = safeGetLong(counterSnap, "current");
+
+            // Lay 1 tap mau (orderBy soLo desc) de tim max. (Firestore khong ho tro max theo regex)
+            db.collection("LoHang")
+                    .orderBy("soLo", Query.Direction.DESCENDING)
+                    .limit(80)
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+                        long maxFound = 0L;
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            String soLo = safeGetString(doc, "soLo");
+                            if (soLo == null || soLo.trim().isEmpty()) {
+                                soLo = doc.getId();
+                            }
+                            long n = extractLoHangNumber(soLo);
+                            if (n > maxFound) {
+                                maxFound = n;
+                            }
+                        }
+
+                        if (maxFound > current) {
+                            Map<String, Object> update = new HashMap<>();
+                            update.put("current", maxFound);
+                            update.put("updatedAt", FieldValue.serverTimestamp());
+                            counterRef.set(update, SetOptions.merge())
+                                    .addOnSuccessListener(unused -> {
+                                        loHangCounterNormalizedDone = true;
+                                        loHangCounterNormalizedRunning = false;
+                                    })
+                                    .addOnFailureListener(e -> loHangCounterNormalizedRunning = false);
+                        } else {
+                            loHangCounterNormalizedDone = true;
+                            loHangCounterNormalizedRunning = false;
+                        }
+                    })
+                    .addOnFailureListener(e -> loHangCounterNormalizedRunning = false);
+        }).addOnFailureListener(e -> loHangCounterNormalizedRunning = false);
+    }
+
+    private static long extractLoHangNumber(String raw) {
+        if (raw == null) {
+            return -1L;
+        }
+        String s = raw.trim();
+        java.util.regex.Matcher m = LO_HANG_CODE_PATTERN.matcher(s);
+        if (!m.matches()) {
+            return -1L;
+        }
+        String digits = m.group(1);
+        if (digits == null) {
+            return -1L;
+        }
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException e) {
+            return -1L;
+        }
+    }
+
+    private static long safeGetLong(DocumentSnapshot snapshot, String key) {
+        if (snapshot == null) {
+            return 0L;
+        }
+        Object raw = snapshot.get(key);
+        if (raw instanceof Number) {
+            return ((Number) raw).longValue();
+        }
+        if (raw instanceof String) {
+            try {
+                return Long.parseLong(((String) raw).trim());
+            } catch (NumberFormatException ignored) {
+                return 0L;
+            }
+        }
+        return 0L;
     }
 
     private void normalizeMaIdSchemaOnce() {
@@ -598,6 +691,42 @@ public class NhapHangRepository {
 
     public Task<DocumentSnapshot> getProductById(String maSP) {
         return db.collection("SanPham").document(maSP).get();
+    }
+
+    /**
+     * Tao so lo (ma lo) tu dong theo counter tren Firestore de tranh trung khi nhieu may tao cung luc.
+     * Dinh dang: LH000001, LH000002, ...
+     *
+     * Counter luu tai: /counters/LoHang { current: <number> }
+     */
+    public Task<String> generateNextSoLo() {
+        ensureLoHangCounterNormalized();
+        DocumentReference counterRef = db.collection("counters").document("LoHang");
+        return db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(counterRef);
+            long current = 0L;
+            if (snapshot.exists()) {
+                Object raw = snapshot.get("current");
+                if (raw instanceof Number) {
+                    current = ((Number) raw).longValue();
+                } else if (raw instanceof String) {
+                    try {
+                        current = Long.parseLong(((String) raw).trim());
+                    } catch (NumberFormatException ignored) {
+                        current = 0L;
+                    }
+                }
+            }
+            long next = current + 1L;
+
+            Map<String, Object> update = new HashMap<>();
+            update.put("current", next);
+            update.put("updatedAt", FieldValue.serverTimestamp());
+            transaction.set(counterRef, update, SetOptions.merge());
+
+            // Co dinh do dai 4 chu so de dong bo voi du lieu dang co (vd: LH0040, LH0041).
+            return String.format(Locale.getDefault(), "LH%04d", next);
+        });
     }
 
     public Task<Void> upsertLoHang(String soLo, LoHang loHang) {

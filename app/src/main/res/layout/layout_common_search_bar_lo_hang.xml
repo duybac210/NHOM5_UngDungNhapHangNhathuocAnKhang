@@ -1,91 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <FrameLayout
-        android:id="@+id/flContent"
+    <!-- Search Bar Section (dong bo voi man Don hang) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/llSearchContainer"
         android:layout_width="match_parent"
-        android:layout_height="45dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="6dp"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        tools:ignore="Autofill,MissingAutofillHint"
         app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:layout_marginTop="3dp"
-            android:layout_marginEnd="5dp"
+        <!-- Search Box -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/panel_batches"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:background="@drawable/search_bg_rounded"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/ivFilter"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
-            <LinearLayout
-                android:id="@+id/panel_batches"
-                android:layout_width="match_parent"
-                android:layout_height="38dp"
-                android:layout_marginStart="2dp"
-                android:layout_marginTop="2dp"
-                android:layout_marginEnd="5dp"
-                android:layout_weight="1"
-                android:background="@drawable/search_bg_rounded"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
+            <EditText
+                android:id="@+id/searchEditText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="@string/search_batches_hint"
+                android:textColorHint="#64748b"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif"
+                android:background="@android:color/transparent"
+                android:inputType="text"
+                android:autofillHints="text"
+                android:importantForAutofill="no"
                 android:paddingStart="11dp"
-                android:paddingEnd="11dp">
-
-                <EditText
-                    android:id="@+id/searchEditText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:fontFamily="sans-serif"
-                    android:hint="@string/search_batches_hint"
-                    android:inputType="text"
-                    android:textColorHint="#64748b"
-                    android:textSize="14sp" />
-
-                <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:contentDescription="@string/search_icon_desc"
-                    android:src="@drawable/ic_search"
-                    app:tint="#64748b" />
-            </LinearLayout>
+                android:paddingEnd="11dp"
+                tools:ignore="Autofill,MissingAutofillHint"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/ivSearchIcon"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
 
             <ImageView
-                android:id="@+id/ivFilter"
-                android:layout_width="34dp"
-                android:layout_height="36dp"
-                android:layout_marginStart="2dp"
-                android:layout_marginTop="2dp"
-                android:layout_marginEnd="5dp"
-                android:background="@drawable/search_bg_rounded"
-                android:clickable="true"
-                android:contentDescription="@string/filter_icon_desc"
-                android:focusable="true"
-                android:padding="8dp"
-                android:src="@android:drawable/ic_menu_sort_by_size"
-                app:tint="#64748b" />
-        </LinearLayout>
-    </FrameLayout>
+                android:id="@+id/ivSearchIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/ic_search"
+                app:tint="#64748b"
+                android:contentDescription="@null"
+                tools:ignore="ContentDescription,MissingContentDescription"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!-- "Add" slot: tai LoHang dung lam nut Filter (giu id ivFilter de code khong doi) -->
+        <ImageView
+            android:id="@+id/ivFilter"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            app:tint="#444444"
+            android:scaleType="centerInside"
+            android:padding="6dp"
+            android:contentDescription="@string/filter_icon_desc"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="4dp" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Title -->
     <TextView
+        android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
         android:layout_marginStart="5dp"
-        android:layout_marginBottom="15dp"
-        android:fontFamily="sans-serif-medium"
-        android:paddingBottom="5dp"
+        android:paddingBottom="10dp"
         android:text="@string/batch_manage_title"
-        android:textColor="#000000"
         android:textSize="14sp"
+        android:textColor="#000000"
+        android:fontFamily="sans-serif-medium"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/flContent" />
+        app:layout_constraintTop_toBottomOf="@id/llSearchContainer"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 
