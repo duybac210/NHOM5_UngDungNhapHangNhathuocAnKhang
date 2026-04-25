@@ -27,7 +27,6 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
     private TextView tvNgaySanXuat;
     private TextView tvTenHang;
     private TextView tvSoLuong;
-    private TextView tvDonGia;
     private TextView tvThanhTien;
 
     private NhapHangRepository repository;
@@ -67,7 +66,6 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
         tvNgaySanXuat = findViewById(R.id.tvNgaySanXuat);
         tvTenHang = findViewById(R.id.tvTenHang);
         tvSoLuong = findViewById(R.id.tvSoLuong);
-        tvDonGia = findViewById(R.id.tvDonGia);
         tvThanhTien = findViewById(R.id.tvThanhTien);
     }
 
@@ -88,12 +86,10 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
         String maSP = firstNonEmpty(doc, "maSP", "MaSP", "maHang", "MaHang");
         String maNhapHang = firstNonEmpty(doc, "maNhapHang", "MaNhapHang");
         double soLuong = firstNumber(doc, "soLuong", "SoLuong");
-        Double donGiaNhapValue = firstNumberNullable(doc, "donGiaNhap", "DonGiaNhap", "giaNhap", "GiaNhap", "donGia", "DonGia");
-        double donGiaNhap = donGiaNhapValue != null ? donGiaNhapValue : 0d;
         Date hanSuDung = firstDate(doc, "hanSuDung", "HanSuDung", "hansudung");
         Date ngaySanXuat = firstDate(doc, "ngaySanXuat", "NgaySanXuat", "ngaySX", "NgaySX", "nsx", "NSX");
 
-        syncLegacyLoHangFields(doc, soLo, maSP, maNhapHang, soLuong, donGiaNhap, hanSuDung, ngaySanXuat);
+        syncLegacyLoHangFields(doc, soLo, maSP, maNhapHang, soLuong, hanSuDung, ngaySanXuat);
 
         tvSoLo.setText(defaultText(soLo));
         tvMaSanPham.setText(defaultText(maSP));
@@ -102,13 +98,7 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
         tvNgaySanXuat.setText(formatDate(ngaySanXuat));
         tvTenHang.setText(defaultText(maSP));
         tvSoLuong.setText(formatNumber(soLuong));
-        tvDonGia.setText(donGiaNhapValue != null ? formatMoney(donGiaNhap) : "-");
-        tvThanhTien.setText(donGiaNhapValue != null ? formatMoney(soLuong * donGiaNhap) : "-");
-
-        // Chuan hoa du lieu cu ve field donGiaNhap de cac man hinh doc dong nhat.
-        if (!doc.contains("donGiaNhap") && donGiaNhapValue != null && donGiaNhap > 0d) {
-            repository.updateLoHangDonGiaNhap(soLo, donGiaNhap);
-        }
+        tvThanhTien.setText("-");
 
         if (!TextUtils.isEmpty(maSP)) {
             repository.getProductById(maSP).addOnSuccessListener(productDoc -> {
@@ -118,15 +108,28 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
                         tvTenHang.setText(tenSP);
                     }
 
-                    if (donGiaNhapValue == null) {
-                        Double donGiaFromProduct = firstNumberNullable(productDoc,
-                                "giaNhap", "GiaNhap", "giavon", "GiaVon", "giaVon", "donGiaNhap", "DonGiaNhap");
-                        if (donGiaFromProduct != null && donGiaFromProduct > 0d) {
-                            tvDonGia.setText(formatMoney(donGiaFromProduct));
-                            tvThanhTien.setText(formatMoney(soLuong * donGiaFromProduct));
-                            repository.updateLoHangDonGiaNhap(soLo, donGiaFromProduct);
-                        }
+                    // Thanh tien = soLuong * gia von (uu tien giaVon, fallback giaNhap)
+                    Double giaVon = firstNumberNullable(productDoc, "giaVon", "GiaVon", "giavon", "giaNhap", "GiaNhap", "donGiaNhap", "DonGiaNhap");
+                    if (giaVon != null && giaVon > 0d) {
+                        tvThanhTien.setText(formatMoney(soLuong * giaVon));
                     }
+
+                    // Uu tien lay nha cung cap tu lien ket SanPham -> maNCC, sau do truy van tenNCC.
+                    String maNccFromProduct = firstNonEmpty(productDoc,
+                            "maNCC", "MaNCC",
+                            "maNhaCungCap", "MaNhaCungCap",
+                            "maNcc", "MaNcc");
+                    if (!TextUtils.isEmpty(maNccFromProduct)) {
+                        repository.getSupplierById(maNccFromProduct).addOnSuccessListener(nccDoc -> {
+                            if (nccDoc.exists()) {
+                                String tenNCC = firstNonEmpty(nccDoc, "tenNCC", "TenNCC", "tenNhaCungCap", "TenNhaCungCap");
+                                if (!TextUtils.isEmpty(tenNCC)) {
+                                    tvNhaCungCap.setText(tenNCC);
+                                }
+                            }
+                        });
+                    }
+
 
                     if (ngaySanXuat == null) {
                         Date nsxFromProduct = firstDate(productDoc, "ngaySanXuat", "NgaySanXuat", "ngaySX", "NgaySX", "nsx", "NSX");
@@ -154,20 +157,28 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
                     return;
                 }
 
+                // Neu da co ten NCC tu SanPham thi khong can ghi de.
+                CharSequence current = tvNhaCungCap.getText();
+                if (current != null && !"-".contentEquals(current) && current.length() > 0) {
+                    return;
+                }
+
                 repository.getSupplierById(maNCC).addOnSuccessListener(nccDoc -> {
-                    if (nccDoc.exists()) {
-                        String tenNCC = firstNonEmpty(nccDoc, "tenNCC", "TenNCC");
-                        if (!TextUtils.isEmpty(tenNCC)) {
-                            tvNhaCungCap.setText(String.format(Locale.getDefault(), "%s - %s", maNCC, tenNCC));
-                        } else {
-                            tvNhaCungCap.setText(maNCC);
-                        }
-                    } else {
-                        tvNhaCungCap.setText(maNCC);
+                    if (!nccDoc.exists()) {
+                        // Khong hien ma NCC, chi hien ten. Neu khong co ten thi giu '-'.
+                        return;
+                    }
+                    String tenNCC = firstNonEmpty(nccDoc, "tenNCC", "TenNCC", "tenNhaCungCap", "TenNhaCungCap");
+                    if (!TextUtils.isEmpty(tenNCC)) {
+                        tvNhaCungCap.setText(tenNCC);
                     }
                 });
             });
         }
+    }
+
+    private static String formatMoney(double value) {
+        return String.format(Locale.getDefault(), "%,.0fđ", value);
     }
 
     private static String firstNonEmpty(DocumentSnapshot snapshot, String... keys) {
@@ -269,7 +280,6 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
                                         String maSP,
                                         String maNhapHang,
                                         double soLuong,
-                                        double donGiaNhap,
                                         Date hanSuDung,
                                         Date ngaySanXuat) {
         if (TextUtils.isEmpty(soLo)) {
@@ -290,7 +300,6 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
         canonical.setMaSP(maSP);
         canonical.setMaNhapHang(maNhapHang);
         canonical.setSoLuong(soLuong);
-        canonical.setDonGiaNhap(donGiaNhap);
         canonical.setHanSuDung(hanSuDung);
         canonical.setNgaySanXuat(ngaySanXuat);
         repository.upsertLoHang(soLo, canonical);
@@ -305,9 +314,6 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
         return String.format(Locale.getDefault(), "%,.0f", value);
     }
 
-    private static String formatMoney(double value) {
-        return String.format(Locale.getDefault(), "%,.0fđ", value);
-    }
 
     private static String formatDate(Date value) {
         if (value == null) {

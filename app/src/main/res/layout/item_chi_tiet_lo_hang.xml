@@ -180,28 +180,6 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Đơn giá nhập"
-                android:textColor="@color/text_black"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/tvDonGia"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/text_black"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="Thành tiền"
                 android:textColor="@color/text_black"
                 android:textSize="12sp" />

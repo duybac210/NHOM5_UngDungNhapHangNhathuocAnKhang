@@ -61,6 +61,8 @@ public class LoHangFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
+        // Tu dong dong bo counter ma lo theo du lieu hien co tren Firebase.
+        repository.ensureLoHangCounterNormalized();
         Query query = repository.getAllLoHang();
         FirestoreRecyclerOptions<LoHang> options = new FirestoreRecyclerOptions.Builder<LoHang>()
                 .setQuery(query, snapshot -> parseLoHang(snapshot))

@@ -24,7 +24,6 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
 import com.nhom5.pharma.MainActivity;
 import com.nhom5.pharma.R;
-import com.nhom5.pharma.feature.nhacungcap.NhaCungCapRepository;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -51,6 +50,7 @@ public class TaoDonNhapActivity extends AppCompatActivity {
     private EditText etImportDate;
     private Calendar calendar = Calendar.getInstance();
     private FirebaseFirestore db;
+    private NhapHangRepository repository;
     private List<String> supplierIds = new ArrayList<>();
     private List<String> supplierNames = new ArrayList<>();
     private ArrayAdapter<String> supplierAdapter;
@@ -102,6 +102,7 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tao_don_nhap);
         db = FirebaseFirestore.getInstance();
+        repository = NhapHangRepository.getInstance();
 
         initViews();
         setupBackNavigation();
@@ -248,23 +249,54 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         DocumentReference orderRef = db.collection("NhapHang").document(customId.trim());
         batch.set(orderRef, order);
 
-        // Lưu Lô hàng
+        // Luu Lo hang: tu dong tao soLo tang dan theo database (global).
+        final ArrayList<LoHang> flatList = flattenLoHangs();
+        generateSoLoAndAddToBatch(batch, customId, flatList, 0)
+                .addOnSuccessListener(unused -> batch.commit()
+                        .addOnSuccessListener(aVoid -> onSaveSuccess())
+                        .addOnFailureListener(this::onSaveFailure))
+                .addOnFailureListener(this::onSaveFailure);
+    }
+
+    private ArrayList<LoHang> flattenLoHangs() {
+        ArrayList<LoHang> flat = new ArrayList<>();
         for (SelectedProduct product : selectedProducts) {
-            for (int i = 0; i < product.getLoHangs().size(); i++) {
-                LoHang lo = product.getLoHangs().get(i);
-                String soLo = String.format(Locale.getDefault(), "%s-L%02d", customId, i + 1);
-                DocumentReference loRef = db.collection("LoHang").document(soLo);
-                
-                Map<String, Object> data = lo.toFirestoreMap();
-                data.put("soLo", soLo);
-                data.put("maNhapHang", customId);
-                batch.set(loRef, data);
-            }
+            flat.addAll(product.getLoHangs());
+        }
+        return flat;
+    }
+
+    /**
+     * Tao soLo theo counter tren Firestore (NhapHangRepository.generateNextSoLo),
+     * add vao WriteBatch, chua commit. Chay de quy tu 0..n-1.
+     */
+    private com.google.android.gms.tasks.Task<Void> generateSoLoAndAddToBatch(
+            WriteBatch batch,
+            String maNhapHang,
+            ArrayList<LoHang> loHangs,
+            int index
+    ) {
+        if (index >= loHangs.size()) {
+            return com.google.android.gms.tasks.Tasks.forResult(null);
         }
 
-        batch.commit()
-                .addOnSuccessListener(aVoid -> onSaveSuccess())
-                .addOnFailureListener(this::onSaveFailure);
+        LoHang lo = loHangs.get(index);
+        return repository.generateNextSoLo()
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        Exception e = task.getException() != null ? task.getException() : new RuntimeException("Khong tao duoc so lo");
+                        return com.google.android.gms.tasks.Tasks.forException(e);
+                    }
+                    String soLo = task.getResult();
+                    DocumentReference loRef = db.collection("LoHang").document(soLo);
+
+                    Map<String, Object> data = lo.toFirestoreMap();
+                    data.put("soLo", soLo);
+                    data.put("maNhapHang", maNhapHang);
+                    batch.set(loRef, data);
+
+                    return generateSoLoAndAddToBatch(batch, maNhapHang, loHangs, index + 1);
+                });
     }
 
     private void onSaveSuccess() {
