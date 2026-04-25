@@ -89,6 +89,12 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                             loHang.setDonGiaNhap(price);
                             loHang.setSoLuong(quantity);
                             p.addLoHang(loHang);
+
+                            // Dong bo so luong: so luong nhap trong LoHang se cap nhat ra so luong san pham ben ngoai.
+                            // UI ben ngoai dang la int, nen lam tron ve so nguyen.
+                            int qtyInt = (int) Math.round(quantity);
+                            if (qtyInt <= 0) qtyInt = 1;
+                            p.setSoLuong(qtyInt);
                             break;
                         }
                     }
