@@ -29,18 +29,22 @@ public class MainActivity extends AppCompatActivity {
     public static final String EXTRA_START_TAB = "START_TAB";
     public static final String EXTRA_SUPPLIER_ID = "SUPPLIER_ID";
 
-    private static final int ACTIVE_COLOR = Color.parseColor("#5cc849");
+    private static final int DEFAULT_ACTIVE_COLOR = Color.parseColor("#5cc849");
     private static final int INACTIVE_COLOR = Color.parseColor("#000000");
+    private int currentActiveColor = DEFAULT_ACTIVE_COLOR;
 
     private ImageView[] navIcons;
     private TextView[] navLabels;
+    private LinearLayout bottomNavBar;
     private FirebaseAuth mAuth;
+    private com.google.firebase.firestore.FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
         mAuth = FirebaseAuth.getInstance();
+        db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
         
         // Tạm thời bỏ qua đăng nhập để làm việc với Nhà cung cấp
         /*
@@ -69,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
                 findViewById(R.id.tv_nav_manage)
         };
 
+        bottomNavBar = findViewById(R.id.bottom_nav_bar);
+
         LinearLayout tabOrders = findViewById(R.id.nav_tab_orders);
         LinearLayout tabProducts = findViewById(R.id.nav_tab_products);
         LinearLayout tabBatches = findViewById(R.id.nav_tab_batches);
@@ -91,6 +97,48 @@ public class MainActivity extends AppCompatActivity {
             getIntent().putExtra(EXTRA_SUPPLIER_ID, supplierId.trim());
         }
         selectTab(requestedTab);
+        
+        checkUserRoleAndSetupUI();
+    }
+
+    private void checkUserRoleAndSetupUI() {
+        com.google.firebase.auth.FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null && user.getEmail() != null) {
+            db.collection("TaiKhoan")
+                    .whereEqualTo("email", user.getEmail())
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        if (!queryDocumentSnapshots.isEmpty()) {
+                            com.google.firebase.firestore.DocumentSnapshot doc = queryDocumentSnapshots.getDocuments().get(0);
+                            // Lấy chức vụ từ Firestore
+                            String role = doc.getString("chucVu"); 
+                            if (role == null) role = doc.getString("role");
+
+                            if ("manager".equalsIgnoreCase(role) || "quản lý".equalsIgnoreCase(role)) {
+                                // Nếu là manager, đổi màu biểu tượng active sang đỏ
+                                currentActiveColor = Color.RED;
+                                
+                                // Đổi màu nền của thanh menu sang màu đỏ nhạt hoặc đỏ tùy ý
+                                if (bottomNavBar != null) {
+                                    bottomNavBar.setBackgroundColor(Color.parseColor("#FFF0F0")); // Đỏ cực nhạt
+                                }
+                                
+                                // Cập nhật lại giao diện ngay lập tức
+                                refreshNavUI();
+                            }
+                        }
+                    });
+        }
+    }
+
+    private void refreshNavUI() {
+        // Tìm tab hiện tại đang được chọn để cập nhật màu mới
+        for (int i = 0; i < navLabels.length; i++) {
+            if (navLabels[i] != null && navLabels[i].getCurrentTextColor() != INACTIVE_COLOR) {
+                updateNavUI(i);
+                break;
+            }
+        }
     }
 
     private void selectTab(int index) {
@@ -118,15 +166,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         loadFragment(selected);
+        updateNavUI(index);
+    }
 
+    private void updateNavUI(int selectedIndex) {
         for (int i = 0; i < navIcons.length; i++) {
             if (navIcons[i] == null || navLabels[i] == null) continue;
-            boolean isSelected = (i == index);
-            int color = isSelected ? ACTIVE_COLOR : INACTIVE_COLOR;
+            boolean isSelected = (i == selectedIndex);
+            int color = isSelected ? currentActiveColor : INACTIVE_COLOR;
             ImageViewCompat.setImageTintList(navIcons[i], ColorStateList.valueOf(color));
             navLabels[i].setTextColor(color);
         }
     }
+
+
 
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager()
