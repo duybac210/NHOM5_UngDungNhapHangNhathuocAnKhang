@@ -1,7 +1,6 @@
 package com.nhom5.pharma.feature.nhacungcap;
 
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.InputType;
 import android.widget.Button;
 import android.widget.EditText;
@@ -130,9 +129,7 @@ public class CreateSupplierActivity extends AppCompatActivity {
 
         db.collection("NhaCungCap").document(maID).set(supplier)
                 .addOnSuccessListener(aVoid -> {
-                    SuccessDialogHelper.showSuccessDialog(this, "Thêm nhà cung cấp thành công!", () -> {
-                        new Handler().postDelayed(this::finish, 1500);
-                    });
+                    SuccessDialogHelper.showSuccessDialog(this, "Lưu thành công!", this::finish);
                 })
                 .addOnFailureListener(e -> {
                     btnLuu.setEnabled(true);

@@ -25,6 +25,7 @@ import com.google.firebase.firestore.WriteBatch;
 import com.nhom5.pharma.MainActivity;
 import com.nhom5.pharma.R;
 import com.nhom5.pharma.feature.nhacungcap.NhaCungCapRepository;
+import com.nhom5.pharma.util.SuccessDialogHelper;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -68,7 +69,6 @@ public class TaoDonNhapActivity extends AppCompatActivity {
             }
     );
 
-    // Launcher cho màn hình Thêm Lô Hàng
     private final ActivityResultLauncher<Intent> addBatchLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -76,17 +76,14 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                     String productId = result.getData().getStringExtra("product_id");
                     long mfgDate = result.getData().getLongExtra("mfg_date", 0);
                     long expDate = result.getData().getLongExtra("exp_date", 0);
-                    double price = result.getData().getDoubleExtra("price", 0);
                     double quantity = result.getData().getDoubleExtra("quantity", 0);
 
-                    // Cập nhật trạng thái lô cho thuốc tương ứng
                     for (SelectedProduct p : selectedProducts) {
                         if (p.getMaSanPham().equals(productId)) {
                             LoHang loHang = new LoHang();
                             loHang.setMaSP(productId);
                             loHang.setNgaySanXuat(new java.util.Date(mfgDate));
                             loHang.setHanSuDung(new java.util.Date(expDate));
-                            loHang.setDonGiaNhap(price);
                             loHang.setSoLuong(quantity);
                             p.addLoHang(loHang);
                             break;
@@ -121,7 +118,6 @@ public class TaoDonNhapActivity extends AppCompatActivity {
 
         btnAddBatch.setOnClickListener(v -> {
             Intent intent = new Intent(this, ThemLoHangActivity.class);
-            
             ArrayList<String> names = new ArrayList<>();
             ArrayList<String> ids = new ArrayList<>();
             for (SelectedProduct p : selectedProducts) {
@@ -130,7 +126,6 @@ public class TaoDonNhapActivity extends AppCompatActivity {
             }
             intent.putStringArrayListExtra("SELECTED_PRODUCT_NAMES", names);
             intent.putStringArrayListExtra("SELECTED_PRODUCT_IDS", ids);
-            
             addBatchLauncher.launch(intent);
         });
 
@@ -240,21 +235,20 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         order.put("ngayNhap", new Timestamp(calendar.getTime()));
         order.put("ngayTao", new Timestamp(calendar.getTime()));
         order.put("ngayCapNhat", FieldValue.serverTimestamp());
+        order.put("ghiChu", "");
         order.put("trangThai", statusValue);
-        order.put("trangThaiText", statusValue == 1 ? "Đã nhập kho" : "Đã hủy");
+        order.put("trangThaiText", spnStatus.getSelectedItem().toString());
         order.put("tongTien", currentTotal);
 
         WriteBatch batch = db.batch();
         DocumentReference orderRef = db.collection("NhapHang").document(customId.trim());
         batch.set(orderRef, order);
 
-        // Lưu Lô hàng
         for (SelectedProduct product : selectedProducts) {
             for (int i = 0; i < product.getLoHangs().size(); i++) {
                 LoHang lo = product.getLoHangs().get(i);
                 String soLo = String.format(Locale.getDefault(), "%s-L%02d", customId, i + 1);
                 DocumentReference loRef = db.collection("LoHang").document(soLo);
-                
                 Map<String, Object> data = lo.toFirestoreMap();
                 data.put("soLo", soLo);
                 data.put("maNhapHang", customId);
@@ -263,7 +257,9 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         }
 
         batch.commit()
-                .addOnSuccessListener(aVoid -> onSaveSuccess())
+                .addOnSuccessListener(aVoid -> {
+                    SuccessDialogHelper.showSuccessDialog(this, "Lưu đơn nhập thành công!", this::finish);
+                })
                 .addOnFailureListener(this::onSaveFailure);
     }
 
