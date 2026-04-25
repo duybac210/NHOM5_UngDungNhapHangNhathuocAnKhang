@@ -99,6 +99,8 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                         }
                     }
                     adapter.notifyDataSetChanged();
+                    // Dong bo tong gia tri don nhap theo so luong moi
+                    updateTotal();
                 }
             }
     );
@@ -299,6 +301,8 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                     Map<String, Object> data = lo.toFirestoreMap();
                     data.put("soLo", soLo);
                     data.put("maNhapHang", maNhapHang);
+                    // Lien ket ngay nhap tu don nhap vao lo hang
+                    data.put("ngayNhap", new Timestamp(calendar.getTime()));
                     batch.set(loRef, data);
 
                     return generateSoLoAndAddToBatch(batch, maNhapHang, loHangs, index + 1);
