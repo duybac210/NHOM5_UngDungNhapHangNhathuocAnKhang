@@ -31,7 +31,7 @@ public class DangNhapFragment extends Fragment {
     private ImageView btnBack, ivEyeIcon;
     private TextView tvForgotPassword, tvSignUp;
     private boolean isPasswordVisible = false;
-    
+
     private FirebaseAuth mAuth;
 
     public DangNhapFragment() {
@@ -46,7 +46,7 @@ public class DangNhapFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+            Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_dang_nhap, container, false);
     }
 
@@ -64,13 +64,13 @@ public class DangNhapFragment extends Fragment {
         tvSignUp = view.findViewById(R.id.tvSignUp);
 
         setupListeners();
-        
+
         // Ensure initial state is hidden
         etPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
         ivEyeIcon.setImageResource(R.drawable.ic_eye_off);
-        
+
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if(currentUser != null){
+        if (currentUser != null) {
             navigateToMain();
         }
     }
@@ -84,7 +84,8 @@ public class DangNhapFragment extends Fragment {
 
         TextWatcher loginTextWatcher = new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -94,7 +95,8 @@ public class DangNhapFragment extends Fragment {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         };
 
         etUsername.addTextChangedListener(loginTextWatcher);
@@ -117,11 +119,11 @@ public class DangNhapFragment extends Fragment {
         btnLogin.setOnClickListener(v -> {
             String email = etUsername.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
-            
+
             if (!email.contains("@")) {
                 email = email + "@ankhang.com";
             }
-            
+
             performLogin(email, password);
         });
     }
@@ -131,21 +133,22 @@ public class DangNhapFragment extends Fragment {
         btnLogin.setText("Đang xử lý...");
 
         mAuth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(), "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+                        }
+                        navigateToMain();
+                    } else {
+                        btnLogin.setEnabled(true);
+                        btnLogin.setText("Tiếp tục");
+                        String message = task.getException() != null ? task.getException().getMessage()
+                                : "Đăng nhập thất bại";
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "Lỗi: " + message, Toast.LENGTH_LONG).show();
+                        }
                     }
-                    navigateToMain();
-                } else {
-                    btnLogin.setEnabled(true);
-                    btnLogin.setText("Tiếp tục");
-                    String message = task.getException() != null ? task.getException().getMessage() : "Đăng nhập thất bại";
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(), "Lỗi: " + message, Toast.LENGTH_LONG).show();
-                    }
-                }
-            });
+                });
     }
 
     private void navigateToMain() {

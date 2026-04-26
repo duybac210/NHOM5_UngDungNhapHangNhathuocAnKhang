@@ -30,7 +30,8 @@ public class NhapHangFragment extends Fragment {
     private NhapHangAdapter adapter;
     private final NhapHangRepository repository = NhapHangRepository.getInstance();
 
-    public NhapHangFragment() {}
+    public NhapHangFragment() {
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -64,14 +65,13 @@ public class NhapHangFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        repository.ensureCanonicalImportIdSchema();
         Query query = repository.getAllNhapHang();
         FirestoreRecyclerOptions<NhapHang> options = new FirestoreRecyclerOptions.Builder<NhapHang>()
                 .setQuery(query, this::parseNhapHang)
                 .build();
 
         adapter = new NhapHangAdapter(options);
-        
+
         recyclerViewNhapHang.setLayoutManager(new LinearLayoutManager(getContext()) {
             @Override
             public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
@@ -98,8 +98,14 @@ public class NhapHangFragment extends Fragment {
                             .build();
                     adapter.updateOptions(options);
                 }
-                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                @Override public void afterTextChanged(Editable s) {}
+
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                }
             });
         }
     }
@@ -112,7 +118,7 @@ public class NhapHangFragment extends Fragment {
         item.setMaNguoiNhap(firstNonEmpty(snapshot, "maNguoiNhap", "MaNguoiNhap"));
         item.setTrangThai(snapshot.get("trangThai"));
         item.setTongTien(firstNumber(snapshot, "tongTien", "TongTien", "totalAmount"));
-        
+
         // Note: NhapHang model doesn't have setGhiChu or setNgayCapNhat
         item.setNgayTao(firstDate(snapshot, "ngayTao", "createdAt", "NgayTao"));
         item.setNgayNhap(firstDate(snapshot, "ngayNhap", "NgayNhap"));
@@ -162,6 +168,17 @@ public class NhapHangFragment extends Fragment {
         return null;
     }
 
-    @Override public void onStart() { super.onStart(); if (adapter != null) adapter.startListening(); }
-    @Override public void onStop() { super.onStop(); if (adapter != null) adapter.stopListening(); }
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (adapter != null)
+            adapter.startListening();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (adapter != null)
+            adapter.stopListening();
+    }
 }

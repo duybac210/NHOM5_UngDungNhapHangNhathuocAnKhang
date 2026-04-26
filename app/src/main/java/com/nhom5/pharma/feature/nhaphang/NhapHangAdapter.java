@@ -17,11 +17,12 @@ import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.nhom5.pharma.R;
+import com.nhom5.pharma.util.FirestoreValueParser;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHangAdapter.NhapHangViewHolder> {
 
     private int expandedPosition = -1;
@@ -31,9 +32,9 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         super(options);
     }
 
-     @Override
-     @SuppressWarnings("RestrictedApi")
-     protected void onBindViewHolder(@NonNull NhapHangViewHolder holder, int position, @NonNull NhapHang model) {
+    @Override
+    @SuppressWarnings("RestrictedApi")
+    protected void onBindViewHolder(@NonNull NhapHangViewHolder holder, int position, @NonNull NhapHang model) {
         String documentId = getSnapshots().getSnapshot(position).getId();
         String displayId = model.getDisplayId();
         if (displayId == null || displayId.trim().isEmpty()) {
@@ -59,15 +60,29 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
 
         // Logic Expand/Collapse
         final boolean isExpanded = (position == expandedPosition);
+
+        int blueColor = Color.parseColor("#2196f3");
+        int blackColor = Color.BLACK;
+        int color = isExpanded ? blueColor : blackColor;
+
+        holder.tvMaDon.setTextColor(color);
+        holder.tvNgayNhap.setTextColor(color);
+        holder.tvTongTien.setTextColor(color);
+
+        if (holder.lineMaDon != null) {
+            holder.lineMaDon.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+        }
+
         holder.expandableDetail.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
-        
+
         if (isExpanded) {
             loadDetailContent(holder, documentId, model);
         }
 
         holder.itemView.setOnClickListener(v -> {
             int currentPos = holder.getBindingAdapterPosition();
-            if (currentPos == RecyclerView.NO_POSITION) return;
+            if (currentPos == RecyclerView.NO_POSITION)
+                return;
 
             int prev = expandedPosition;
             expandedPosition = isExpanded ? -1 : currentPos;
@@ -77,10 +92,11 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         });
 
         holder.btnXoaDetail.setOnClickListener(v -> showDeleteConfirmation(holder.itemView, documentId));
-        
+
         holder.btnSuaDetail.setOnClickListener(v -> {
             // Logic cho nút Sửa (có thể mở màn hình chỉnh sửa hoặc Dialog)
-            Toast.makeText(v.getContext(), "Tính năng sửa đang được phát triển cho mã " + documentId, Toast.LENGTH_SHORT).show();
+            Toast.makeText(v.getContext(), "Tính năng sửa đang được phát triển cho mã " + documentId,
+                    Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -108,8 +124,8 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         dialog.show();
     }
 
-     @SuppressWarnings("RestrictedApi")
-     private void loadDetailContent(NhapHangViewHolder holder, String orderId, NhapHang model) {
+    @SuppressWarnings("RestrictedApi")
+    private void loadDetailContent(NhapHangViewHolder holder, String orderId, NhapHang model) {
         if (model.getNgayTao() != null) {
             SimpleDateFormat sdfFull = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
             holder.tvNgayNhapDetail.setText(sdfFull.format(model.getNgayTao()));
@@ -119,9 +135,12 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
             repository.getSupplierById(model.getMaNCC()).addOnSuccessListener(doc -> {
                 if (doc.exists()) {
                     String name = doc.getString("tenNCC");
-                    if (name == null) name = doc.getString("TenNCC");
-                    if (name == null) name = doc.getString("tenNhaCungCap");
-                    if (name == null) name = doc.getString("ten");
+                    if (name == null)
+                        name = doc.getString("TenNCC");
+                    if (name == null)
+                        name = doc.getString("tenNhaCungCap");
+                    if (name == null)
+                        name = doc.getString("ten");
                     holder.tvNhaCungCapDetail.setText(name != null ? name : "Không xác định");
                 }
             });
@@ -131,10 +150,12 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
             repository.getUserById(model.getMaNguoiNhap()).addOnSuccessListener(doc -> {
                 if (doc.exists()) {
                     String name = doc.getString("tenNguoiDung");
-                    if (name == null) name = doc.getString("hoTen");
+                    if (name == null)
+                        name = doc.getString("hoTen");
                     holder.tvNguoiNhapDetail.setText(name != null ? name : model.getMaNguoiNhap());
                 } else {
-                    holder.tvNguoiNhapDetail.setText(String.format(holder.itemView.getContext().getString(R.string.user_code_format), model.getMaNguoiNhap()));
+                    holder.tvNguoiNhapDetail.setText(String.format(
+                            holder.itemView.getContext().getString(R.string.user_code_format), model.getMaNguoiNhap()));
                 }
             });
         }
@@ -144,25 +165,43 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
             for (DocumentSnapshot doc : snapshot) {
                 View itemView = LayoutInflater.from(holder.itemView.getContext())
                         .inflate(R.layout.item_chi_tiet_lo_hang_nhap_hang, holder.llChiTietHang, false);
-                
-                ((TextView)itemView.findViewById(R.id.tvSoLo)).setText(doc.getId());
-                
+
+                ((TextView) itemView.findViewById(R.id.tvSoLo)).setText(doc.getId());
+
                 Double sl = doc.getDouble("soLuong");
-                Double dg = doc.getDouble("donGiaNhap");
                 double soLuong = sl != null ? sl : 0;
-                double donGia = dg != null ? dg : 0;
-                
-                ((TextView)itemView.findViewById(R.id.tvSoLuong)).setText(String.format(Locale.getDefault(), "%,.0f", soLuong));
-                ((TextView)itemView.findViewById(R.id.tvDonGia)).setText(String.format(Locale.getDefault(), "%,.0fđ", donGia));
-                ((TextView)itemView.findViewById(R.id.tvThanhTien)).setText(String.format(Locale.getDefault(), "%,.0fđ", soLuong * donGia));
-                
+
+                TextView tvDonGia = itemView.findViewById(R.id.tvDonGia);
+                TextView tvThanhTien = itemView.findViewById(R.id.tvThanhTien);
+
+                ((TextView) itemView.findViewById(R.id.tvSoLuong))
+                        .setText(String.format(Locale.getDefault(), "%,.0f", soLuong));
+
                 String maSP = doc.getString("maSP");
+                double donGia = FirestoreValueParser.safeDouble(FirestoreValueParser.safeRaw(doc, "donGiaNhap"));
+                if (donGia <= 0 && maSP != null) {
+                    repository.getProductById(maSP).addOnSuccessListener(productDoc -> {
+                        if (productDoc.exists()) {
+                            double giaVon = FirestoreValueParser.safeDouble(
+                                    FirestoreValueParser.safeRaw(productDoc, "giavon", "GiaVon", "giaNhap", "GiaNhap"));
+                            if (giaVon > 0) {
+                                tvDonGia.setText(String.format(Locale.getDefault(), "%,.0fđ", giaVon));
+                                tvThanhTien.setText(String.format(Locale.getDefault(), "%,.0fđ", soLuong * giaVon));
+                            }
+                        }
+                    });
+                } else {
+                    tvDonGia.setText(String.format(Locale.getDefault(), "%,.0fđ", donGia));
+                    tvThanhTien.setText(String.format(Locale.getDefault(), "%,.0fđ", soLuong * donGia));
+                }
+
                 if (maSP != null) {
                     repository.getProductById(maSP).addOnSuccessListener(spDoc -> {
                         if (spDoc.exists()) {
                             String tenSP = spDoc.getString("tenSP");
-                            if (tenSP == null) tenSP = spDoc.getString("TenSP");
-                            ((TextView)itemView.findViewById(R.id.tvTenHang)).setText(tenSP);
+                            if (tenSP == null)
+                                tenSP = spDoc.getString("TenSP");
+                            ((TextView) itemView.findViewById(R.id.tvTenHang)).setText(tenSP);
                         }
                     });
                 }
@@ -181,7 +220,7 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
 
     public static class NhapHangViewHolder extends RecyclerView.ViewHolder {
         TextView tvMaDon, tvNgayNhap, tvTongTien, tvTrangThai;
-        View expandableDetail;
+        View expandableDetail, lineMaDon;
         TextView tvNguoiNhapDetail, tvNgayNhapDetail, tvNhaCungCapDetail;
         LinearLayout llChiTietHang;
         Button btnXoaDetail, btnSuaDetail;
@@ -192,13 +231,14 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
             tvNgayNhap = itemView.findViewById(R.id.tvNgayNhap);
             tvTongTien = itemView.findViewById(R.id.tvTongTien);
             tvTrangThai = itemView.findViewById(R.id.tvTrangThai);
-            
+
             expandableDetail = itemView.findViewById(R.id.expandableDetail);
+            lineMaDon = itemView.findViewById(R.id.lineMaDon);
             tvNguoiNhapDetail = itemView.findViewById(R.id.tvNguoiNhapDetail);
             tvNgayNhapDetail = itemView.findViewById(R.id.tvNgayNhapDetail);
             tvNhaCungCapDetail = itemView.findViewById(R.id.tvNhaCungCapDetail);
             llChiTietHang = itemView.findViewById(R.id.llChiTietHang);
-            
+
             btnXoaDetail = itemView.findViewById(R.id.btnXoaDetail);
             btnSuaDetail = itemView.findViewById(R.id.btnSuaDetail);
         }

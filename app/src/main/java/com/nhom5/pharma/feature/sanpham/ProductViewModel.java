@@ -18,11 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import com.nhom5.pharma.util.FirestoreValueParser;
+import java.util.Date;
+import com.google.firebase.Timestamp;
+import java.util.Collections;
 
 public class ProductViewModel extends ViewModel {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final CollectionReference productsRef = db.collection("SanPham");
     private final MutableLiveData<List<Product>> products = new MutableLiveData<>();
+    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
     private ListenerRegistration listener;
 
     public ProductViewModel() {
@@ -30,6 +35,7 @@ public class ProductViewModel extends ViewModel {
     }
 
     public LiveData<List<Product>> getProducts() { return products; }
+    public LiveData<String> getErrorMessage() { return errorMessage; }
 
     public void listenToProducts(String supplierId) {
         if (listener != null) {
@@ -37,11 +43,13 @@ public class ProductViewModel extends ViewModel {
             listener = null;
         }
 
-        Query query = productsRef.orderBy(FieldPath.documentId(), Query.Direction.DESCENDING);
+        // Bỏ lệnh orderBy() để tránh lỗi FAILED_PRECONDITION (Requires an index)
+        Query query = productsRef;
         final String normalizedSupplierId = supplierId == null ? null : supplierId.trim();
 
         listener = query.addSnapshotListener((value, error) -> {
             if (error != null) {
+                errorMessage.setValue("Lỗi Firebase: " + error.getMessage());
                 Log.e("ProductVM", "Firestore Listen failed: " + error.getMessage());
                 return;
             }
@@ -56,17 +64,50 @@ public class ProductViewModel extends ViewModel {
                             }
                         }
 
-                        Product p = doc.toObject(Product.class);
-                        if (p == null) p = new Product();
+                        Product p = new Product();
                         p.setId(doc.getId());
+                        p.setMaID(FirestoreValueParser.safeString(doc, "maID"));
+                        Object tenSP = FirestoreValueParser.safeRaw(doc, "tenSP", "tenSanPham");
+                        p.setTenSP(tenSP != null ? String.valueOf(tenSP) : "");
+                        
+                        Double giaVon = FirestoreValueParser.safeDouble(doc, "giavon");
+                        if (giaVon == null) giaVon = FirestoreValueParser.safeDouble(doc, "giaVon");
+                        p.setGiavon(giaVon != null ? giaVon : 0.0);
+                        
+                        Double giaBan = FirestoreValueParser.safeDouble(doc, "giaBan");
+                        p.setGiaBan(giaBan != null ? giaBan : 0.0);
+                        
+                        p.setMaVach(FirestoreValueParser.safeString(doc, "maVach"));
+                        p.setMoTa(FirestoreValueParser.safeString(doc, "moTa"));
+                        
+                        Object hangSX = FirestoreValueParser.safeRaw(doc, "hangSX", "hangSanXuat");
+                        p.setHangSX(hangSX != null ? String.valueOf(hangSX) : "");
+                        
+                        Object nuocSX = FirestoreValueParser.safeRaw(doc, "nuocSX", "nuocSanXuat");
+                        p.setNuocSX(nuocSX != null ? String.valueOf(nuocSX) : "");
+                        p.setTrangThai(FirestoreValueParser.safeRaw(doc, "trangThai"));
+                        
+                        Object ngayTaoRaw = doc.get("ngayTao");
+                        if (ngayTaoRaw instanceof Timestamp) {
+                            p.setNgayTao(((Timestamp) ngayTaoRaw).toDate());
+                        }
+
                         if (productSupplierId != null && !productSupplierId.trim().isEmpty()) {
                             p.setMaNCC(productSupplierId.trim());
                         }
                         list.add(p);
                     } catch (Exception e) {
-                        Log.e("ProductVM", "Lỗi parse document: " + doc.getId());
+                        Log.e("ProductVM", "Lỗi parse document: " + doc.getId() + " - " + e.getMessage());
                     }
                 }
+                
+                // Sắp xếp danh sách cục bộ (Local Sorting) thay vì bắt Firebase sắp xếp
+                Collections.sort(list, (p1, p2) -> {
+                    if (p1.getId() == null) return 1;
+                    if (p2.getId() == null) return -1;
+                    return p2.getId().compareTo(p1.getId()); // Mới nhất lên đầu
+                });
+                
                 products.setValue(list);
             }
         });

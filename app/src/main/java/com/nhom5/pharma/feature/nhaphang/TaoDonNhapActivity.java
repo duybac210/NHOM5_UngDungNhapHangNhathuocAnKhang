@@ -86,6 +86,7 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                             loHang.setNgaySanXuat(new java.util.Date(mfgDate));
                             loHang.setHanSuDung(new java.util.Date(expDate));
                             loHang.setSoLuong(quantity);
+                            loHang.setDonGiaNhap(p.getDonGia()); // Lưu đơn giá tại thời điểm này
                             p.addLoHang(loHang);
 
                             // Dong bo so luong: so luong nhap trong LoHang se cap nhat ra so luong san pham ben ngoai.
@@ -195,37 +196,15 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         }
 
         btnSave.setEnabled(false);
-        db.collection("NhapHang")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> saveOrderToFirebase(buildNextImportId(queryDocumentSnapshots.getDocuments())))
+        // Tối ưu: Lấy mã đơn hàng trực tiếp từ counter, không tải toàn bộ danh sách đơn cũ
+        repository.generateNextNhapHangId()
+                .addOnSuccessListener(this::saveOrderToFirebase)
                 .addOnFailureListener(e -> {
                     btnSave.setEnabled(true);
-                    Toast.makeText(this, "Lỗi kiểm tra ID: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Lỗi lấy mã đơn hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
-    private String buildNextImportId(List<? extends DocumentSnapshot> documents) {
-        Set<Long> usedNumbers = new HashSet<>();
-        for (DocumentSnapshot document : documents) {
-            String maIdField = document.getString("maID");
-            String[] candidates = new String[] { maIdField, document.getId() };
-            for (String candidate : candidates) {
-                long number = extractImportIdNumber(candidate);
-                if (number > 0) usedNumbers.add(number);
-            }
-        }
-        long nextNumber = 1;
-        while (usedNumbers.contains(nextNumber)) nextNumber++;
-        return String.format(Locale.getDefault(), "NH%04d", nextNumber);
-    }
-
-    private long extractImportIdNumber(String rawId) {
-        if (rawId == null) return -1;
-        Matcher matcher = IMPORT_ID_PATTERN.matcher(rawId.trim());
-        if (!matcher.matches()) return -1;
-        try { return Long.parseLong(matcher.group(1)); } 
-        catch (NumberFormatException e) { return -1; }
-    }
 
     private void saveOrderToFirebase(String customId) {
         int supplierPos = spnSupplier.getSelectedItemPosition();
@@ -240,94 +219,66 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         String supplierId = supplierIds.get(supplierPos);
 
         order.put("maNCC", supplierId);
-        order.put("maID", customId);
+        order.put("maID", customId.trim());
         order.put("maNguoiNhap", DEFAULT_MA_NGUOI_NHAP);
         order.put("ngayNhap", new Timestamp(calendar.getTime()));
-        order.put("ngayTao", new Timestamp(calendar.getTime()));
+        order.put("ngayTao", FieldValue.serverTimestamp());
         order.put("ngayCapNhat", FieldValue.serverTimestamp());
         order.put("ghiChu", "");
         order.put("trangThai", statusValue);
         order.put("trangThaiText", spnStatus.getSelectedItem().toString());
         order.put("tongTien", currentTotal);
 
-        WriteBatch batch = db.batch();
-        DocumentReference orderRef = db.collection("NhapHang").document(customId.trim());
-        batch.set(orderRef, order);
-
-        // Luu Lo hang: tu dong tao soLo tang dan theo database (global).
         final ArrayList<LoHang> flatList = flattenLoHangs();
-        generateSoLoAndAddToBatch(batch, customId, flatList, 0)
-                .addOnSuccessListener(unused -> batch.commit()
+        
+        // Tối ưu: Lấy TẤT CẢ mã số lô hàng trong 1 lần kết nối duy nhất
+        repository.generateNextIds("LoHang", "LH", flatList.size())
+                .addOnSuccessListener(batchIds -> {
+                    WriteBatch batch = db.batch();
+                    
+                    // Thêm đơn nhập vào batch
+                    DocumentReference orderRef = db.collection("NhapHang").document(customId.trim());
+                    batch.set(orderRef, order);
+                    
+                    // Thêm tất cả các lô hàng vào batch
+                    for (int i = 0; i < flatList.size(); i++) {
+                        LoHang lo = flatList.get(i);
+                        String soLo = batchIds.get(i);
+                        DocumentReference loRef = db.collection("LoHang").document(soLo);
+
+                        Map<String, Object> data = lo.toFirestoreMap();
+                        data.put("soLo", soLo);
+                        data.put("maNhapHang", customId.trim());
+                        data.put("ngayNhap", new Timestamp(calendar.getTime()));
+                        batch.set(loRef, data);
+                    }
+                    
+                    // Thực hiện lưu toàn bộ (commit) - Chỉ mất 1 lần ghi xuống server
+                    batch.commit()
                         .addOnSuccessListener(aVoid -> onSaveSuccess())
-                        .addOnFailureListener(this::onSaveFailure))
+                        .addOnFailureListener(this::onSaveFailure);
+                })
                 .addOnFailureListener(this::onSaveFailure);
     }
 
     private ArrayList<LoHang> flattenLoHangs() {
         ArrayList<LoHang> flat = new ArrayList<>();
         for (SelectedProduct product : selectedProducts) {
-            flat.addAll(product.getLoHangs());
-
-        for (SelectedProduct product : selectedProducts) {
-            for (int i = 0; i < product.getLoHangs().size(); i++) {
-                LoHang lo = product.getLoHangs().get(i);
-                String soLo = String.format(Locale.getDefault(), "%s-L%02d", customId, i + 1);
-                DocumentReference loRef = db.collection("LoHang").document(soLo);
-                Map<String, Object> data = lo.toFirestoreMap();
-                data.put("soLo", soLo);
-                data.put("maNhapHang", customId);
-                batch.set(loRef, data);
+            for (LoHang lo : product.getLoHangs()) {
+                // Đảm bảo mỗi lô hàng đều có đơn giá nhập (nếu chưa có thì lấy từ sản phẩm)
+                if (lo.getDonGiaNhap() <= 0) {
+                    lo.setDonGiaNhap(product.getDonGia());
+                }
+                flat.add(lo);
             }
         }
         return flat;
     }
 
 
-    /**
-     * Tao soLo theo counter tren Firestore (NhapHangRepository.generateNextSoLo),
-     * add vao WriteBatch, chua commit. Chay de quy tu 0..n-1.
-     */
-    private com.google.android.gms.tasks.Task<Void> generateSoLoAndAddToBatch(
-            WriteBatch batch,
-            String maNhapHang,
-            ArrayList<LoHang> loHangs,
-            int index
-    ) {
-        if (index >= loHangs.size()) {
-            return com.google.android.gms.tasks.Tasks.forResult(null);
-        }
-
-        LoHang lo = loHangs.get(index);
-        return repository.generateNextSoLo()
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        Exception e = task.getException() != null ? task.getException() : new RuntimeException("Khong tao duoc so lo");
-                        return com.google.android.gms.tasks.Tasks.forException(e);
-                    }
-                    String soLo = task.getResult();
-                    DocumentReference loRef = db.collection("LoHang").document(soLo);
-
-                    Map<String, Object> data = lo.toFirestoreMap();
-                    data.put("soLo", soLo);
-                    data.put("maNhapHang", maNhapHang);
-                    // Lien ket ngay nhap tu don nhap vao lo hang
-                    data.put("ngayNhap", new Timestamp(calendar.getTime()));
-                    batch.set(loRef, data);
-
-                    return generateSoLoAndAddToBatch(batch, maNhapHang, loHangs, index + 1);
-                });
-
-        batch.commit()
-                .addOnSuccessListener(aVoid -> {
-                    SuccessDialogHelper.showSuccessDialog(this, "Lưu đơn nhập thành công!", this::finish);
-                })
-                .addOnFailureListener(this::onSaveFailure);
-
-    }
 
     private void onSaveSuccess() {
-        Toast.makeText(this, "Lưu đơn nhập thành công!", Toast.LENGTH_SHORT).show();
-        finish();
+        SuccessDialogHelper.showSuccessDialog(this, "Lưu đơn nhập thành công!", this::finish);
     }
 
     private void onSaveFailure(Exception e) {

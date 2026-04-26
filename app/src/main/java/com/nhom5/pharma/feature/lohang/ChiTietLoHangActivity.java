@@ -22,6 +22,7 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
 
     private TextView tvSoLo;
     private TextView tvMaSanPham;
+    private TextView tvMaNhapHang;
     private TextView tvNhaCungCap;
     private TextView tvHanSuDung;
     private TextView tvNgaySanXuat;
@@ -61,6 +62,7 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
 
         tvSoLo = findViewById(R.id.tvSoLo);
         tvMaSanPham = findViewById(R.id.tvMaSanPham);
+        tvMaNhapHang = findViewById(R.id.tvMaNhapHang);
         tvNhaCungCap = findViewById(R.id.tvNhaCungCap);
         tvHanSuDung = findViewById(R.id.tvHanSuDung);
         tvNgaySanXuat = findViewById(R.id.tvNgaySanXuat);
@@ -93,6 +95,7 @@ public class ChiTietLoHangActivity extends AppCompatActivity {
 
         tvSoLo.setText(defaultText(soLo));
         tvMaSanPham.setText(defaultText(maSP));
+        tvMaNhapHang.setText(defaultText(maNhapHang));
         tvNhaCungCap.setText("-");
         tvHanSuDung.setText(formatDate(hanSuDung));
         tvNgaySanXuat.setText(formatDate(ngaySanXuat));

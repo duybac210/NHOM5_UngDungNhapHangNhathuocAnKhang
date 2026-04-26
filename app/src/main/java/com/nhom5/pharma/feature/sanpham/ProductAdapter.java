@@ -20,7 +20,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
     public interface OnProductClickListener {
         void onItemClick(Product product);
+
         void onEditClick(Product product);
+
         void onDeleteClick(Product product);
     }
 
@@ -61,21 +63,27 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
         holder.itemView.setOnClickListener(v -> {
             if (selectMode) {
-                if (listener != null) listener.onItemClick(product);
+                if (listener != null)
+                    listener.onItemClick(product);
                 return;
             }
 
             int previousExpanded = expandedPosition;
-            expandedPosition = (expandedPosition == holder.getBindingAdapterPosition()) ? -1 : holder.getBindingAdapterPosition();
-            if (previousExpanded >= 0) notifyItemChanged(previousExpanded);
-            if (expandedPosition >= 0) notifyItemChanged(expandedPosition);
+            expandedPosition = (expandedPosition == holder.getBindingAdapterPosition()) ? -1
+                    : holder.getBindingAdapterPosition();
+            if (previousExpanded >= 0)
+                notifyItemChanged(previousExpanded);
+            if (expandedPosition >= 0)
+                notifyItemChanged(expandedPosition);
         });
 
         holder.btnEdit.setOnClickListener(v -> {
-            if (listener != null) listener.onEditClick(product);
+            if (listener != null)
+                listener.onEditClick(product);
         });
         holder.btnDelete.setOnClickListener(v -> {
-            if (listener != null) listener.onDeleteClick(product);
+            if (listener != null)
+                listener.onDeleteClick(product);
         });
     }
 
@@ -110,7 +118,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             tvMaHang.setText(product.getId());
             tvTenHang.setText(product.getTenSP());
             tvGiaVon.setText(String.format(Locale.getDefault(), "%,.0f", product.getGiavon()));
-            
+
             if (product.getNgayTao() != null) {
                 tvThoiGian.setText(sdf.format(product.getNgayTao()));
             } else {
@@ -131,13 +139,16 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             tvGiaVon.setTextColor(color);
             tvThoiGian.setTextColor(color);
 
-            if (lineMaHang != null) lineMaHang.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+            if (lineMaHang != null)
+                lineMaHang.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
             layoutDetail.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
 
             if (isExpanded) {
                 tvDetailTen.setText(product.getTenSP());
                 tvDetailMaHang.setText(product.getId());
-                tvDetailMaVach.setText(product.getMaVach() != null && !product.getMaVach().isEmpty() ? product.getMaVach() : "Chưa có");
+                tvDetailMaVach
+                        .setText(product.getMaVach() != null && !product.getMaVach().isEmpty() ? product.getMaVach()
+                                : "Chưa có");
                 tvDetailGiaVon.setText(String.format(Locale.getDefault(), "%,.0f", product.getGiavon()));
             }
         }

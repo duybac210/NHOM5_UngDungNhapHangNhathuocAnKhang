@@ -34,15 +34,20 @@ public final class FirestoreValueParser {
         return value == null ? null : value.intValue();
     }
 
-    public static Object safeRaw(DocumentSnapshot doc, String field) {
-        if (doc == null || field == null) {
+    public static Object safeRaw(DocumentSnapshot doc, String... fields) {
+        if (doc == null || fields == null) {
             return null;
         }
-        try {
-            return doc.get(field);
-        } catch (RuntimeException ignored) {
-            return null;
+        for (String field : fields) {
+            try {
+                Object value = doc.get(field);
+                if (value != null) {
+                    return value;
+                }
+            } catch (RuntimeException ignored) {
+            }
         }
+        return null;
     }
 
     private static Double toDouble(Object raw) {

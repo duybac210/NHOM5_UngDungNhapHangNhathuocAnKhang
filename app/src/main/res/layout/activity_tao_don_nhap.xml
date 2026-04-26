@@ -36,7 +36,7 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -143,23 +143,16 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Selected Products Card - Grows with content, scrolls with page -->
-            <androidx.cardview.widget.CardView
+            <!-- Danh sách thuốc: Tự động giãn nở theo nội dung -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewSelectedProducts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                android:layout_marginBottom="16dp">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerViewSelectedProducts"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"
-                    tools:listitem="@layout/item_selected_product"
-                    tools:itemCount="2"
-                    android:minHeight="60dp"/>
-            </androidx.cardview.widget.CardView>
+                android:nestedScrollingEnabled="false"
+                android:background="@android:color/transparent"
+                android:overScrollMode="never"
+                tools:listitem="@layout/item_selected_product"
+                tools:itemCount="3" />
 
             <!-- Add Product Button -->
             <TextView
@@ -175,7 +168,7 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <!-- Bottom Actions and Footer Navigation -->
     <LinearLayout
@@ -241,7 +234,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"
                 android:layout_marginStart="8dp"
-                android:backgroundTint="#1B5E20"
+                android:backgroundTint="@color/login_primary"
                 android:text="Lưu"
                 android:textAllCaps="false"
                 android:textColor="@color/white"

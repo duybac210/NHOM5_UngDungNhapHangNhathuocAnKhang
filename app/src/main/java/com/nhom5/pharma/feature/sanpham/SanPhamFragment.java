@@ -39,11 +39,13 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_san_pham, container, false);
 
         if (getActivity() != null && getActivity().getIntent() != null) {
-            isSelectMode = getActivity().getIntent().getBooleanExtra(com.nhom5.pharma.MainActivity.EXTRA_SELECT_MODE, false);
+            isSelectMode = getActivity().getIntent().getBooleanExtra(com.nhom5.pharma.MainActivity.EXTRA_SELECT_MODE,
+                    false);
             supplierFilterId = null;
         }
 
@@ -53,11 +55,46 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         adapter = new ProductAdapter(this, isSelectMode);
         rvProducts.setAdapter(adapter);
 
-        viewModel = new ViewModelProvider(this).get(ProductViewModel.class);
+        // 1. Khởi tạo các View từ search_bar include
+        View searchBarContainer = view.findViewById(R.id.search_bar);
+        if (searchBarContainer != null) {
+            searchEditText = searchBarContainer.findViewById(R.id.searchEditText);
+            View btnAddNew = searchBarContainer.findViewById(R.id.btnAddNew);
+            TextView tvTitle = view.findViewById(R.id.tvTitle);
 
-        viewModel.listenToProducts(supplierFilterId);
+            if (tvTitle != null) tvTitle.setText("Quản lý sản phẩm");
+
+            if (btnAddNew != null) {
+                btnAddNew.setVisibility(isSelectMode ? View.GONE : View.VISIBLE);
+                btnAddNew.setOnClickListener(v -> {
+                    if (isSelectMode) return;
+                    startActivity(new Intent(requireContext(), TaoSanPhamActivity.class));
+                });
+            }
+
+            if (searchEditText != null) {
+                searchEditText.setHint("Tìm kiếm sản phẩm...");
+                searchEditText.addTextChangedListener(new TextWatcher() {
+                    @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                        filterLocal(s.toString());
+                    }
+                    @Override public void afterTextChanged(Editable s) {}
+                });
+            }
+        }
+
+        // 2. Khởi tạo ViewModel và Quan sát dữ liệu
+        viewModel = new ViewModelProvider(this).get(ProductViewModel.class);
         
-        // ĐỒNG BỘ REAL-TIME CỦA TRÀ MY
+        viewModel.getErrorMessage().observe(getViewLifecycleOwner(), msg -> {
+            if (msg != null && getContext() != null) {
+                Toast.makeText(getContext(), msg, Toast.LENGTH_LONG).show();
+            }
+        });
+        
+        viewModel.listenToProducts(supplierFilterId);
+
         viewModel.getProducts().observe(getViewLifecycleOwner(), products -> {
             if (products != null) {
                 fullList = products;
@@ -69,44 +106,6 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
                 }
             }
         });
-
-        TextView tvTitle = view.findViewById(R.id.tvTitle);
-        if (tvTitle != null) {
-            tvTitle.setText("Quản lý sản phẩm");
-        }
-
-        View btnAddNew = view.findViewById(R.id.btnAddNew);
-        View searchBarContainer = view.findViewById(R.id.search_bar);
-        if (btnAddNew == null && searchBarContainer != null) {
-            btnAddNew = searchBarContainer.findViewById(R.id.btnAddNew);
-        }
-        
-        if (btnAddNew != null) {
-            btnAddNew.setVisibility(isSelectMode ? View.GONE : View.VISIBLE);
-            btnAddNew.setOnClickListener(v -> {
-                if (isSelectMode) {
-                    return;
-                }
-                Intent intent = new Intent(requireContext(), TaoSanPhamActivity.class);
-                startActivity(intent);
-            });
-        }
-
-        searchEditText = view.findViewById(R.id.searchEditText);
-        if (searchEditText == null && searchBarContainer != null) {
-            searchEditText = searchBarContainer.findViewById(R.id.searchEditText);
-        }
-        
-        if (searchEditText != null) {
-            searchEditText.setHint("Tìm kiếm sản phẩm...");
-            searchEditText.addTextChangedListener(new TextWatcher() {
-                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    filterLocal(s.toString());
-                }
-                @Override public void afterTextChanged(Editable s) {}
-            });
-        }
 
         return view;
     }
@@ -121,7 +120,7 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         List<Product> filtered = new ArrayList<>();
         for (Product p : fullList) {
             if ((p.getTenSP() != null && p.getTenSP().toLowerCase(Locale.getDefault()).contains(q)) ||
-                (p.getId() != null && p.getId().toLowerCase(Locale.getDefault()).contains(q))) {
+                    (p.getId() != null && p.getId().toLowerCase(Locale.getDefault()).contains(q))) {
                 filtered.add(p);
             }
         }
@@ -130,7 +129,8 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
 
     @Override
     public void onItemClick(Product product) {
-        if (!isSelectMode || getActivity() == null) return;
+        if (!isSelectMode || getActivity() == null)
+            return;
         Intent resultIntent = new Intent();
         resultIntent.putExtra("product_id", product.getId());
         resultIntent.putExtra("product_name", product.getTenSP());
@@ -139,13 +139,21 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         getActivity().finish();
     }
 
-    @Override public void onEditClick(Product product) { showEditDialog(product); }
-    @Override public void onDeleteClick(Product product) { showDeleteConfirmDialog(product); }
+    @Override
+    public void onEditClick(Product product) {
+        showEditDialog(product);
+    }
+
+    @Override
+    public void onDeleteClick(Product product) {
+        showDeleteConfirmDialog(product);
+    }
 
     private void showDeleteConfirmDialog(Product product) {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_confirm_delete_product, null);
         AlertDialog dialog = new AlertDialog.Builder(getContext()).setView(dialogView).create();
-        if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        if (dialog.getWindow() != null)
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         dialogView.findViewById(R.id.iv_close_dialog).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.tv_skip).setOnClickListener(v -> dialog.dismiss());
@@ -160,7 +168,8 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
     private void showEditDialog(Product product) {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_edit_product, null);
         AlertDialog dialog = new AlertDialog.Builder(getContext()).setView(dialogView).create();
-        if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        if (dialog.getWindow() != null)
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         TextView tvDialogTitle = dialogView.findViewById(R.id.tv_dialog_title);
         EditText etMaHang = dialogView.findViewById(R.id.et_ma_hang);
@@ -176,7 +185,8 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
             etGiaVon.setText(String.format(Locale.getDefault(), "%.0f", product.getGiavon()));
         }
 
-        if (ivClose != null) ivClose.setOnClickListener(v -> dialog.dismiss());
+        if (ivClose != null)
+            ivClose.setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.btn_cancel).setOnClickListener(v -> dialog.dismiss());
 
         dialogView.findViewById(R.id.btn_save).setOnClickListener(v -> {
@@ -189,8 +199,10 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
             p.setTenSP(tenHang);
             try {
                 String gv = etGiaVon.getText().toString();
-                if (!gv.isEmpty()) p.setGiavon(Double.parseDouble(gv));
-            } catch (Exception ignored) {}
+                if (!gv.isEmpty())
+                    p.setGiavon(Double.parseDouble(gv));
+            } catch (Exception ignored) {
+            }
             viewModel.saveProduct(p);
             dialog.dismiss();
         });

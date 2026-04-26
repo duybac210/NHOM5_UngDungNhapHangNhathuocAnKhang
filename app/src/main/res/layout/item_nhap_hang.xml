@@ -15,10 +15,29 @@
         android:orientation="horizontal"
         android:paddingStart="8dp"
         android:paddingEnd="8dp">
-        <TextView android:id="@+id/tvMaDon" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.8" android:textColor="#000000" android:textSize="13sp" android:gravity="center" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:gravity="center"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/tvMaDon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:textSize="13sp"
+                android:gravity="center" />
+            <View
+                android:id="@+id/lineMaDon"
+                android:layout_width="45dp"
+                android:layout_height="1.2dp"
+                android:background="#2196f3"
+                android:visibility="gone" />
+        </LinearLayout>
         <TextView android:id="@+id/tvNgayNhap" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.1" android:textColor="#000000" android:textSize="13sp" android:gravity="center" />
         <TextView android:id="@+id/tvTongTien" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.2" android:textColor="#000000" android:textSize="13sp" android:gravity="center" />
-        <TextView android:id="@+id/tvTrangThai" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.4" android:textColor="#000000" android:textSize="13sp" android:textStyle="bold" android:paddingStart="12dp" />
+        <TextView android:id="@+id/tvTrangThai" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.4" android:textColor="#000000" android:textSize="13sp" android:paddingStart="12dp" />
     </LinearLayout>
 
     <LinearLayout

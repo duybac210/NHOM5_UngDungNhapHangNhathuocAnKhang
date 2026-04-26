@@ -1,5 +1,6 @@
 package com.nhom5.pharma;
 
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -13,10 +14,12 @@ import androidx.fragment.app.Fragment;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.nhom5.pharma.feature.lohang.LoHangFragment;
+import com.nhom5.pharma.feature.dangnhap.DangNhapActivity;
 import com.nhom5.pharma.feature.nhacungcap.NhaCungCapFragment;
 import com.nhom5.pharma.feature.nhaphang.NhapHangFragment;
 import com.nhom5.pharma.feature.quanly.QuanLyFragment;
 import com.nhom5.pharma.feature.sanpham.SanPhamFragment;
+import com.nhom5.pharma.feature.sanpham.ProductSchemaSync;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,30 +45,27 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         mAuth = FirebaseAuth.getInstance();
         db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
-        
-        // Tạm thời bỏ qua đăng nhập để làm việc với Nhà cung cấp
-        /*
+
         if (mAuth.getCurrentUser() == null) {
             Intent intent = new Intent(this, DangNhapActivity.class);
             startActivity(intent);
             finish();
             return;
         }
-        */
 
         setContentView(R.layout.activity_main);
 
-        navIcons = new ImageView[]{
+        navIcons = new ImageView[] {
                 findViewById(R.id.iv_nav_orders),
                 findViewById(R.id.iv_nav_products),
                 findViewById(R.id.iv_nav_batches),
                 findViewById(R.id.iv_nav_suppliers),
                 findViewById(R.id.iv_nav_manage)
         };
-        navLabels = new TextView[]{
+        navLabels = new TextView[] {
                 findViewById(R.id.tv_nav_orders),
                 findViewById(R.id.tv_nav_products),
                 findViewById(R.id.tv_nav_batches),
@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         tabManage.setOnClickListener(v -> selectTab(TAB_MANAGE));
 
         boolean isSelectMode = getIntent().getBooleanExtra(EXTRA_SELECT_MODE, false);
-        int requestedTab = getIntent().getIntExtra(EXTRA_START_TAB, TAB_SUPPLIERS);
+        int requestedTab = getIntent().getIntExtra(EXTRA_START_TAB, TAB_ORDERS);
         if (isSelectMode) {
             requestedTab = TAB_PRODUCTS;
         }
@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
             getIntent().putExtra(EXTRA_SUPPLIER_ID, supplierId.trim());
         }
         selectTab(requestedTab);
-        
+
         checkUserRoleAndSetupUI();
     }
 
@@ -109,20 +109,22 @@ public class MainActivity extends AppCompatActivity {
                     .get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
                         if (!queryDocumentSnapshots.isEmpty()) {
-                            com.google.firebase.firestore.DocumentSnapshot doc = queryDocumentSnapshots.getDocuments().get(0);
+                            com.google.firebase.firestore.DocumentSnapshot doc = queryDocumentSnapshots.getDocuments()
+                                    .get(0);
                             // Lấy chức vụ từ Firestore
-                            String role = doc.getString("chucVu"); 
-                            if (role == null) role = doc.getString("role");
+                            String role = doc.getString("chucVu");
+                            if (role == null)
+                                role = doc.getString("role");
 
                             if ("manager".equalsIgnoreCase(role) || "quản lý".equalsIgnoreCase(role)) {
                                 // Nếu là manager, đổi màu biểu tượng active sang đỏ
                                 currentActiveColor = Color.RED;
-                                
+
                                 // Đổi màu nền của thanh menu sang màu đỏ nhạt hoặc đỏ tùy ý
                                 if (bottomNavBar != null) {
                                     bottomNavBar.setBackgroundColor(Color.parseColor("#FFF0F0")); // Đỏ cực nhạt
                                 }
-                                
+
                                 // Cập nhật lại giao diện ngay lập tức
                                 refreshNavUI();
                             }
@@ -171,15 +173,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateNavUI(int selectedIndex) {
         for (int i = 0; i < navIcons.length; i++) {
-            if (navIcons[i] == null || navLabels[i] == null) continue;
+            if (navIcons[i] == null || navLabels[i] == null)
+                continue;
             boolean isSelected = (i == selectedIndex);
             int color = isSelected ? currentActiveColor : INACTIVE_COLOR;
             ImageViewCompat.setImageTintList(navIcons[i], ColorStateList.valueOf(color));
             navLabels[i].setTextColor(color);
         }
     }
-
-
 
     private void loadFragment(Fragment fragment) {
         getSupportFragmentManager()

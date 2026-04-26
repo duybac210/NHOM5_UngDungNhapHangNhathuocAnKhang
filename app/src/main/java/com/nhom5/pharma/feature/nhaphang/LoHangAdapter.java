@@ -53,8 +53,8 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
     @Override
     protected void onBindViewHolder(@NonNull LoHangViewHolder holder, int position, @NonNull LoHang model) {
         DocumentSnapshot snapshot = getSnapshots().getSnapshot(position);
-
-        String soLo = firstNonEmpty(snapshot, snapshot.getId(), "soLo", "SoLo", "maLo", "MaLo");
+        String docId = snapshot.getId();
+        String soLo = firstNonEmpty(snapshot, docId, "soLo", "SoLo", "maLo", "MaLo");
         Date hanSuDung = firstDate(snapshot, model.getHanSuDung(), "hanSuDung", "HanSuDung", "hansudung");
         String maHang = firstNonEmpty(snapshot, model.getMaSP(), "maHang", "MaHang", "maSP", "MaSP", "maNhapHang", "MaNhapHang");
         Date ngayNhap = firstDate(snapshot, model.getNgayNhap(), "ngayNhap", "NgayNhap", "ngayTao", "createdAt");
@@ -90,7 +90,7 @@ public class LoHangAdapter extends FirestoreRecyclerAdapter<LoHang, LoHangAdapte
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ChiTietLoHangActivity.class);
-            intent.putExtra(ChiTietLoHangActivity.EXTRA_SO_LO, soLo);
+            intent.putExtra(ChiTietLoHangActivity.EXTRA_SO_LO, docId);
             v.getContext().startActivity(intent);
         });
     }
