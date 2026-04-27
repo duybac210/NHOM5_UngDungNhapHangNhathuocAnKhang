@@ -68,7 +68,13 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
                 btnAddNew.setVisibility(isSelectMode ? View.GONE : View.VISIBLE);
                 btnAddNew.setOnClickListener(v -> {
                     if (isSelectMode) return;
-                    startActivity(new Intent(requireContext(), TaoSanPhamActivity.class));
+                    com.nhom5.pharma.util.RoleHelper.checkIsManager(isManager -> {
+                        if (isManager) {
+                            startActivity(new Intent(requireContext(), TaoSanPhamActivity.class));
+                        } else {
+                            Toast.makeText(getContext(), "Bạn không có quyền thực hiện chức năng này", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 });
             }
 
@@ -141,12 +147,24 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
 
     @Override
     public void onEditClick(Product product) {
-        showEditDialog(product);
+        com.nhom5.pharma.util.RoleHelper.checkIsManager(isManager -> {
+            if (isManager) {
+                showEditDialog(product);
+            } else {
+                Toast.makeText(getContext(), "Bạn không có quyền thực hiện chức năng này", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
     public void onDeleteClick(Product product) {
-        showDeleteConfirmDialog(product);
+        com.nhom5.pharma.util.RoleHelper.checkIsManager(isManager -> {
+            if (isManager) {
+                showDeleteConfirmDialog(product);
+            } else {
+                Toast.makeText(getContext(), "Bạn không có quyền thực hiện chức năng này", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void showDeleteConfirmDialog(Product product) {
@@ -159,6 +177,7 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
         dialogView.findViewById(R.id.tv_skip).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.btn_confirm_yes).setOnClickListener(v -> {
             viewModel.deleteProduct(product.getId());
+            com.nhom5.pharma.feature.history.LogRepository.getInstance().logDelete("SANPHAM", product.getId(), "Xóa sản phẩm: " + product.getTenSP());
             dialog.dismiss();
             Toast.makeText(getContext(), "Đã xóa sản phẩm", Toast.LENGTH_SHORT).show();
         });
@@ -204,6 +223,8 @@ public class SanPhamFragment extends Fragment implements ProductAdapter.OnProduc
             } catch (Exception ignored) {
             }
             viewModel.saveProduct(p);
+            String logAction = (product != null) ? "Cập nhật" : "Tạo mới";
+            com.nhom5.pharma.feature.history.LogRepository.getInstance().log(logAction.toUpperCase(), "SANPHAM", p.getId(), logAction + " sản phẩm: " + p.getTenSP());
             dialog.dismiss();
         });
 

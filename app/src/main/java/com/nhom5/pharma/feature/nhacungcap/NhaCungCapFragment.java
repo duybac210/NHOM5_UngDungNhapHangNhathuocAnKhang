@@ -101,8 +101,14 @@ public class NhaCungCapFragment extends Fragment {
     private void setupAddButton() {
         if (btnAddNCC != null) {
             btnAddNCC.setOnClickListener(v -> {
-                Intent intent = new Intent(getContext(), CreateSupplierActivity.class);
-                startActivity(intent);
+                com.nhom5.pharma.util.RoleHelper.checkIsManager(isManager -> {
+                    if (isManager) {
+                        Intent intent = new Intent(getContext(), CreateSupplierActivity.class);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(getContext(), "Bạn không có quyền thực hiện chức năng này", Toast.LENGTH_SHORT).show();
+                    }
+                });
             });
         }
     }

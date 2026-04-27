@@ -21,7 +21,9 @@ public class SelectedProduct {
 
     public String getMaSanPham() { return maSanPham; }
     public String getTenSanPham() { return tenSanPham; }
+    public void setTenSanPham(String tenSanPham) { this.tenSanPham = tenSanPham; }
     public double getDonGia() { return donGia; }
+    public void setDonGia(double donGia) { this.donGia = donGia; }
     public int getSoLuong() { return soLuong; }
     public void setSoLuong(int soLuong) { this.soLuong = soLuong; }
 

@@ -94,9 +94,10 @@ public class NhapHangAdapter extends FirestoreRecyclerAdapter<NhapHang, NhapHang
         holder.btnXoaDetail.setOnClickListener(v -> showDeleteConfirmation(holder.itemView, documentId));
 
         holder.btnSuaDetail.setOnClickListener(v -> {
-            // Logic cho nút Sửa (có thể mở màn hình chỉnh sửa hoặc Dialog)
-            Toast.makeText(v.getContext(), "Tính năng sửa đang được phát triển cho mã " + documentId,
-                    Toast.LENGTH_SHORT).show();
+            android.content.Intent intent = new android.content.Intent(v.getContext(), TaoDonNhapActivity.class);
+            intent.putExtra("EXTRA_EDIT_MODE", true);
+            intent.putExtra("EXTRA_ORDER_ID", documentId);
+            v.getContext().startActivity(intent);
         });
     }
 

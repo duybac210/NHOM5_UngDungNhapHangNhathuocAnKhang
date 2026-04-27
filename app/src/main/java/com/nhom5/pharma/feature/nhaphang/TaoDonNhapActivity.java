@@ -26,6 +26,7 @@ import com.nhom5.pharma.MainActivity;
 import com.nhom5.pharma.R;
 import com.nhom5.pharma.feature.nhacungcap.NhaCungCapRepository;
 import com.nhom5.pharma.util.SuccessDialogHelper;
+import com.nhom5.pharma.util.FirestoreValueParser;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -57,6 +58,10 @@ public class TaoDonNhapActivity extends AppCompatActivity {
     private List<String> supplierNames = new ArrayList<>();
     private ArrayAdapter<String> supplierAdapter;
     private double currentTotal = 0;
+    private boolean isEditMode = false;
+    private String editOrderId;
+    private String savedOrderId; // Để ghi log sau khi lưu thành công
+    private TextView tvHeaderTitle;
 
     private final ActivityResultLauncher<Intent> pickProductLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -115,6 +120,15 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         setupBackNavigation();
         setupRecyclerView();
         setupSpinners();
+
+        // Kiểm tra chế độ Sửa
+        isEditMode = getIntent().getBooleanExtra("EXTRA_EDIT_MODE", false);
+        if (isEditMode) {
+            editOrderId = getIntent().getStringExtra("EXTRA_ORDER_ID");
+            tvHeaderTitle.setText("Sửa đơn nhập");
+            loadOrderDataForEdit();
+        }
+
         loadSuppliersFromFirebase();
         updateAddBatchButtonVisibility();
 
@@ -158,6 +172,7 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         btnAddBatch = findViewById(R.id.btnAddBatch);
         etImportDate = findViewById(R.id.etImportDate);
         btnSave = findViewById(R.id.btnSave);
+        tvHeaderTitle = findViewById(R.id.tvHeaderTitle);
         etImportDate.setFocusable(false);
 
         supplierAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, supplierNames);
@@ -165,8 +180,86 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         spnSupplier.setAdapter(supplierAdapter);
     }
 
+    private void loadOrderDataForEdit() {
+        if (editOrderId == null) return;
+
+        repository.getNhapHangById(editOrderId).addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                NhapHang nhapHang = NhapHang.fromDocument(doc);
+                
+                // Set ngày nhập
+                if (nhapHang.getNgayNhap() != null) {
+                    calendar.setTime(nhapHang.getNgayNhap());
+                    updateDateLabel();
+                }
+
+                // Set trạng thái
+                spnStatus.setSelection(nhapHang.getTrangThaiValue() == 1 ? 1 : 0);
+                
+                // Lưu lại mã NCC để set sau khi load xong danh sách NCC
+                final String targetMaNCC = nhapHang.getMaNCC();
+                
+                // Load LoHang
+                repository.getLoHangByNhapHangId(editOrderId).addOnSuccessListener(snapshot -> {
+                    selectedProducts.clear();
+                    Map<String, SelectedProduct> productMap = new HashMap<>();
+
+                    for (QueryDocumentSnapshot loDoc : snapshot) {
+                        LoHang lo = new LoHang();
+                        lo.setSoLo(loDoc.getId());
+                        lo.setMaSP(loDoc.getString("maSP"));
+                        lo.setSoLuong(loDoc.getDouble("soLuong") != null ? loDoc.getDouble("soLuong") : 0);
+                        lo.setDonGiaNhap(loDoc.getDouble("donGiaNhap") != null ? loDoc.getDouble("donGiaNhap") : 0);
+                        lo.setNgayNhap(loDoc.getDate("ngayNhap"));
+                        lo.setHanSuDung(loDoc.getDate("hanSuDung"));
+                        lo.setNgaySanXuat(loDoc.getDate("ngaySanXuat"));
+                        lo.setMaNhapHang(editOrderId);
+
+                        String maSP = lo.getMaSP();
+                        if (!productMap.containsKey(maSP)) {
+                            SelectedProduct sp = new SelectedProduct(maSP, "Đang tải...", lo.getDonGiaNhap(), 0);
+                            productMap.put(maSP, sp);
+                            selectedProducts.add(sp);
+                            
+                            // Load tên sản phẩm
+                            repository.getProductById(maSP).addOnSuccessListener(pDoc -> {
+                                if (pDoc.exists()) {
+                                    String name = pDoc.getString("tenSP");
+                                    if (name == null) name = pDoc.getString("TenSP");
+                                    sp.setTenSanPham(name != null ? name : "Sản phẩm " + maSP);
+                                    
+                                    // Lấy đơn giá từ sản phẩm nếu đơn giá hiện tại là 0
+                                    double giaVon = FirestoreValueParser.safeDouble(
+                                            FirestoreValueParser.safeRaw(pDoc, "giavon", "GiaVon", "giaNhap", "GiaNhap"));
+                                    if (sp.getDonGia() <= 0) {
+                                        sp.setDonGia(giaVon);
+                                    }
+                                    
+                                    adapter.notifyDataSetChanged();
+                                    updateTotal();
+                                }
+                            });
+                        }
+                        
+                        SelectedProduct sp = productMap.get(maSP);
+                        if (sp != null) {
+                            sp.addLoHang(lo);
+                            sp.setSoLuong((int)(sp.getSoLuong() + lo.getSoLuong()));
+                        }
+                    }
+                    adapter.notifyDataSetChanged();
+                    updateTotal();
+                    updateAddBatchButtonVisibility();
+                });
+
+                // Chờ load NCC xong mới set selection
+                // Cần đảm bảo loadSuppliersFromFirebase đã chạy
+            }
+        });
+    }
+
     private void loadSuppliersFromFirebase() {
-        db.collection("NhaCungCap").get().addOnCompleteListener(task -> {
+        db.collection("NhaCungCap").whereEqualTo("trangThai", true).get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null) {
                 supplierIds.clear();
                 supplierNames.clear();
@@ -185,6 +278,17 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                     supplierNames.add("Chưa có nhà cung cấp");
                 }
                 supplierAdapter.notifyDataSetChanged();
+
+                // Nếu đang ở chế độ sửa, hãy chọn NCC đúng
+                if (isEditMode) {
+                    repository.getNhapHangById(editOrderId).addOnSuccessListener(doc -> {
+                        String maNCC = doc.getString("maNCC");
+                        if (maNCC != null) {
+                            int pos = supplierIds.indexOf(maNCC);
+                            if (pos >= 0) spnSupplier.setSelection(pos);
+                        }
+                    });
+                }
             }
         });
     }
@@ -196,17 +300,23 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         }
 
         btnSave.setEnabled(false);
-        // Tối ưu: Lấy mã đơn hàng trực tiếp từ counter, không tải toàn bộ danh sách đơn cũ
-        repository.generateNextNhapHangId()
-                .addOnSuccessListener(this::saveOrderToFirebase)
-                .addOnFailureListener(e -> {
-                    btnSave.setEnabled(true);
-                    Toast.makeText(this, "Lỗi lấy mã đơn hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+        
+        if (isEditMode) {
+            saveOrderToFirebase(editOrderId);
+        } else {
+            // Tối ưu: Lấy mã đơn hàng trực tiếp từ counter, không tải toàn bộ danh sách đơn cũ
+            repository.generateNextNhapHangId()
+                    .addOnSuccessListener(this::saveOrderToFirebase)
+                    .addOnFailureListener(e -> {
+                        btnSave.setEnabled(true);
+                        Toast.makeText(this, "Lỗi lấy mã đơn hàng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        }
     }
 
 
     private void saveOrderToFirebase(String customId) {
+        savedOrderId = customId.trim();
         int supplierPos = spnSupplier.getSelectedItemPosition();
         if (supplierPos < 0 || supplierNames.isEmpty() || "Chưa có nhà cung cấp".equals(supplierNames.get(0))) {
             Toast.makeText(this, "Vui lòng chọn nhà cung cấp", Toast.LENGTH_SHORT).show();
@@ -222,12 +332,15 @@ public class TaoDonNhapActivity extends AppCompatActivity {
         order.put("maID", customId.trim());
         order.put("maNguoiNhap", DEFAULT_MA_NGUOI_NHAP);
         order.put("ngayNhap", new Timestamp(calendar.getTime()));
-        order.put("ngayTao", FieldValue.serverTimestamp());
         order.put("ngayCapNhat", FieldValue.serverTimestamp());
         order.put("ghiChu", "");
         order.put("trangThai", statusValue);
         order.put("trangThaiText", spnStatus.getSelectedItem().toString());
         order.put("tongTien", currentTotal);
+
+        if (!isEditMode) {
+            order.put("ngayTao", FieldValue.serverTimestamp());
+        }
 
         final ArrayList<LoHang> flatList = flattenLoHangs();
         
@@ -236,40 +349,71 @@ public class TaoDonNhapActivity extends AppCompatActivity {
                 .addOnSuccessListener(batchIds -> {
                     WriteBatch batch = db.batch();
                     
-                    // Thêm đơn nhập vào batch
+                    // Thêm/Cập nhật đơn nhập vào batch
                     DocumentReference orderRef = db.collection("NhapHang").document(customId.trim());
-                    batch.set(orderRef, order);
+                    batch.set(orderRef, order, com.google.firebase.firestore.SetOptions.merge());
                     
-                    // Thêm tất cả các lô hàng vào batch
-                    for (int i = 0; i < flatList.size(); i++) {
-                        LoHang lo = flatList.get(i);
-                        String soLo = batchIds.get(i);
-                        DocumentReference loRef = db.collection("LoHang").document(soLo);
-
-                        Map<String, Object> data = lo.toFirestoreMap();
-                        data.put("soLo", soLo);
-                        data.put("maNhapHang", customId.trim());
-                        data.put("ngayNhap", new Timestamp(calendar.getTime()));
-                        batch.set(loRef, data);
+                    // Nếu là chế độ sửa, xóa các lô hàng cũ trước khi thêm mới
+                    if (isEditMode) {
+                        repository.getLoHangByNhapHangId(customId.trim()).addOnSuccessListener(snapshot -> {
+                            for (DocumentSnapshot doc : snapshot) {
+                                batch.delete(doc.getReference());
+                            }
+                            proceedWithSavingBatches(batch, flatList, batchIds, customId);
+                        }).addOnFailureListener(this::onSaveFailure);
+                    } else {
+                        proceedWithSavingBatches(batch, flatList, batchIds, customId);
                     }
-                    
-                    // Thực hiện lưu toàn bộ (commit) - Chỉ mất 1 lần ghi xuống server
-                    batch.commit()
-                        .addOnSuccessListener(aVoid -> onSaveSuccess())
-                        .addOnFailureListener(this::onSaveFailure);
                 })
                 .addOnFailureListener(this::onSaveFailure);
+    }
+
+    private void proceedWithSavingBatches(WriteBatch batch, List<LoHang> flatList, List<String> batchIds, String customId) {
+        // Thêm tất cả các lô hàng vào batch
+        for (int i = 0; i < flatList.size(); i++) {
+            LoHang lo = flatList.get(i);
+            String soLo = batchIds.get(i);
+            DocumentReference loRef = db.collection("LoHang").document(soLo);
+
+            Map<String, Object> data = lo.toFirestoreMap();
+            data.put("soLo", soLo);
+            data.put("maNhapHang", customId.trim());
+            data.put("ngayNhap", new Timestamp(calendar.getTime()));
+            batch.set(loRef, data);
+        }
+        
+        // Thực hiện lưu toàn bộ (commit) - Chỉ mất 1 lần ghi xuống server
+        batch.commit()
+            .addOnSuccessListener(aVoid -> onSaveSuccess())
+            .addOnFailureListener(this::onSaveFailure);
     }
 
     private ArrayList<LoHang> flattenLoHangs() {
         ArrayList<LoHang> flat = new ArrayList<>();
         for (SelectedProduct product : selectedProducts) {
-            for (LoHang lo : product.getLoHangs()) {
-                // Đảm bảo mỗi lô hàng đều có đơn giá nhập (nếu chưa có thì lấy từ sản phẩm)
-                if (lo.getDonGiaNhap() <= 0) {
-                    lo.setDonGiaNhap(product.getDonGia());
-                }
+            List<LoHang> loHangs = product.getLoHangs();
+            
+            if (loHangs == null || loHangs.isEmpty()) {
+                // Nếu chưa có lô hàng nào, tạo một lô mặc định với số lượng từ form
+                LoHang lo = new LoHang();
+                lo.setMaSP(product.getMaSanPham());
+                lo.setSoLuong(product.getSoLuong());
+                lo.setDonGiaNhap(product.getDonGia());
                 flat.add(lo);
+            } else {
+                // Nếu chỉ có 1 lô hàng, đồng bộ số lượng của lô đó với số lượng trên form
+                if (loHangs.size() == 1) {
+                    loHangs.get(0).setSoLuong(product.getSoLuong());
+                    loHangs.get(0).setDonGiaNhap(product.getDonGia());
+                }
+
+                for (LoHang lo : loHangs) {
+                    // Đảm bảo mỗi lô hàng đều có đơn giá nhập (nếu chưa có thì lấy từ sản phẩm)
+                    if (lo.getDonGiaNhap() <= 0) {
+                        lo.setDonGiaNhap(product.getDonGia());
+                    }
+                    flat.add(lo);
+                }
             }
         }
         return flat;
@@ -278,6 +422,10 @@ public class TaoDonNhapActivity extends AppCompatActivity {
 
 
     private void onSaveSuccess() {
+        String logAction = isEditMode ? "Cập nhật" : "Tạo mới";
+        String orderId = (savedOrderId != null) ? savedOrderId : (isEditMode ? editOrderId : "N/A");
+        com.nhom5.pharma.feature.history.LogRepository.getInstance().log(logAction.toUpperCase(), "NHAPHANG", orderId, logAction + " đơn nhập hàng: " + orderId);
+        
         SuccessDialogHelper.showSuccessDialog(this, "Lưu đơn nhập thành công!", this::finish);
     }
 

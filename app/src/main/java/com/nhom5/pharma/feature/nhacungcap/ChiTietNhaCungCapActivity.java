@@ -84,10 +84,26 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
         
         View btnDelete = findViewById(R.id.btnDelete);
-        if (btnDelete != null) btnDelete.setOnClickListener(v -> showDeleteDialog());
+        if (btnDelete != null) btnDelete.setOnClickListener(v -> {
+            com.nhom5.pharma.util.RoleHelper.checkIsManager(isManager -> {
+                if (isManager) {
+                    showDeleteDialog();
+                } else {
+                    Toast.makeText(this, "Bạn không có quyền thực hiện chức năng này", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
         
         View btnEdit = findViewById(R.id.btnEdit);
-        if (btnEdit != null) btnEdit.setOnClickListener(v -> showEditLayout());
+        if (btnEdit != null) btnEdit.setOnClickListener(v -> {
+            com.nhom5.pharma.util.RoleHelper.checkIsManager(isManager -> {
+                if (isManager) {
+                    showEditLayout();
+                } else {
+                    Toast.makeText(this, "Bạn không có quyền thực hiện chức năng này", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
     }
 
     private void showDetailLayout() {
@@ -185,6 +201,7 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
 
         repository.updateNhaCungCap(ncc).addOnSuccessListener(aVoid -> {
             if (isFinishing() || isDestroyed()) return;
+            com.nhom5.pharma.feature.history.LogRepository.getInstance().logUpdate("NHACUNGCAP", ncc.getId(), "Cập nhật nhà cung cấp: " + ncc.getTenNCC());
             Toast.makeText(this, "Cập nhật thành công", Toast.LENGTH_SHORT).show();
             showDetailLayout();
         }).addOnFailureListener(e -> {
@@ -221,6 +238,7 @@ public class ChiTietNhaCungCapActivity extends AppCompatActivity {
         if (btnConfirm != null) btnConfirm.setOnClickListener(v -> {
             repository.deactivateNhaCungCap(ncc.getId()).addOnSuccessListener(aVoid -> {
                 if (isFinishing() || isDestroyed()) return;
+                com.nhom5.pharma.feature.history.LogRepository.getInstance().logDelete("NHACUNGCAP", ncc.getId(), "Xóa (ngừng hoạt động) nhà cung cấp: " + ncc.getTenNCC());
                 Toast.makeText(this, "Đã xóa nhà cung cấp", Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
                 finish();
